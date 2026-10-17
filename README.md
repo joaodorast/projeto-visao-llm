@@ -1,14 +1,22 @@
 # Projeto 1 — Visão e Interpretação do Ambiente com LLM
 
-Aplicação em Python que **ouve uma pergunta pelo microfone, tira uma foto pela webcam no
-momento da pergunta, envia imagem + pergunta para um modelo multimodal (**Gemini** ou **OpenAI**) e responde
-em voz alta**, mostrando na tela a imagem usada, a pergunta e a resposta.
+Aplicação em Python que **ouve uma pergunta pelo microfone, tira uma foto pela webcam no momento
+da pergunta, envia imagem e pergunta a um modelo multimodal (Gemini ou OpenAI) e responde em voz
+alta**, mostrando na tela a foto usada, a pergunta e a resposta.
 
 ![Interface](docs/img/interface.png)
 
-Visual em cinza e branco, com poucos detalhes em laranja (paleta centralizada em `visao_llm/gui/style.py`).
+> Exemplo: o usuário pergunta *"O que está sobre a mesa?"* e o assistente responde *"Vejo um
+> notebook e uma garrafa sobre a mesa."*
 
-> Exemplo — Usuário: *"O que está sobre a mesa?"* → Robô: *"Vejo um notebook e uma garrafa sobre a mesa."*
+**Destaques**
+
+- Pergunta por voz (a gravação para sozinha quando você fica em silêncio) ou digitada.
+- Dois provedores: **Gemini** (tem camada gratuita) e **OpenAI**, trocáveis sem mudar código.
+- Conversas salvas automaticamente, com barra lateral para reabrir, continuar, buscar e apagar.
+- Páginas de **Diagnóstico**, **Ajustes** e **Ajuda** dentro do app, e tela cheia com **F11**.
+- Falhas de câmera, microfone, rede e API tratadas sem fechar o app.
+- Visual em cinza e branco, com poucos detalhes em laranja.
 
 ---
 
@@ -16,159 +24,238 @@ Visual em cinza e branco, com poucos detalhes em laranja (paleta centralizada em
 
 | Item | Versão / observação |
 |---|---|
-| Python | 3.10 ou superior |
-| Webcam e microfone | qualquer dispositivo reconhecido pelo sistema |
-| Chave de API | **Gemini** (camada gratuita) — <https://aistudio.google.com/apikey> ou **OpenAI** (exige créditos) — <https://platform.openai.com/api-keys> |
-| Linux apenas | `sudo apt install libportaudio2 espeak-ng` (áudio e voz offline) |
+| Python | 3.10 ou superior (desenvolvido e testado no 3.14, Windows 11) |
+| Webcam e microfone | Qualquer dispositivo reconhecido pelo sistema |
+| Chave de API | **Gemini** (camada gratuita): <https://aistudio.google.com/apikey> · **OpenAI** (exige créditos): <https://platform.openai.com/api-keys> |
+| Somente Linux | `sudo apt install libportaudio2 espeak-ng` (áudio e voz offline) |
+
+Assinar o ChatGPT **não** dá acesso à API da OpenAI; a chave da API é cobrada à parte.
 
 ## 2. Instalação
 
 ```bash
-# 1. Entre na pasta do projeto
-cd projeto_visao_llm
+# 1. Baixe o projeto
+git clone https://github.com/joaodorast/projeto-visao-llm.git
+cd projeto-visao-llm
 
 # 2. Crie e ative um ambiente virtual
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# Linux/macOS:
-source .venv/bin/activate
+.venv\Scripts\activate            # Windows
+source .venv/bin/activate         # Linux/macOS
 
 # 3. Instale as dependências
 pip install -r requirements.txt
 
-# 4. Configure a chave (RNF01 — nunca no código)
-#    Windows: copy .env.example .env      Linux/macOS: cp .env.example .env
-#    Abra o .env, escolha PROVEDOR=gemini (ou openai) e cole a chave correspondente.
+# 4. Crie o arquivo de configuração (a chave nunca vai no código — RNF01)
+copy .env.example .env            # Windows
+cp .env.example .env              # Linux/macOS
 ```
+
+Abra o `.env`, deixe `PROVEDOR=gemini` (ou `openai`) e cole a chave em `GEMINI_API_KEY` (ou
+`OPENAI_API_KEY`). Depois de abrir o app, isso também pode ser feito na página **Ajustes**.
+
+Para conferir se está tudo pronto: `python main.py --diagnostico`.
 
 ## 3. Execução
 
 ```bash
-python main.py                    # abre a interface
-python main.py --diagnostico      # testa chave, câmera, microfone, alto-falante e conexão
-python main.py --camera 1         # usa a segunda webcam
-python main.py --camera foto.jpg  # usa uma imagem/vídeo no lugar da webcam (demonstração)
-python main.py --sem-voz          # só texto, sem falar a resposta
-python main.py --provedor openai  # troca de provedor sem editar o .env
+python main.py                     # abre o app
+python main.py --diagnostico       # confere chave, câmera, microfone, alto-falante e conexão, e sai
+python main.py --provedor openai   # usa outro provedor nesta execução
+python main.py --modelo NOME       # usa outro modelo de visão nesta execução
+python main.py --camera 1          # usa a segunda webcam
+python main.py --camera foto.jpg   # usa uma imagem ou vídeo no lugar da webcam (demonstração)
+python main.py --sem-voz           # mostra as respostas sem falar
+python main.py --env outro.env     # usa outro arquivo de configuração
 ```
 
-**Como usar:** clique em **🎤 Clique para falar** (ou `Ctrl+Espaço`), faça a pergunta e fique em
-silêncio — a gravação para sozinha. Também é possível clicar em **■ Parar e enviar**, ou digitar a
-pergunta na caixa de texto. Durante a fala, o botão vira **■ Interromper fala** (`Esc`).
+As opções valem para aquela execução e têm prioridade sobre o `.env`. Se você salvar a página
+**Ajustes** durante essa execução, os valores em uso (inclusive os das opções) passam a ficar
+gravados no `.env`.
 
-**Navegação:** a barra de ícones à esquerda leva às páginas do app (Assistente, Diagnóstico, Ajustes e Ajuda), também por
-`Ctrl+1`, `Ctrl+2`… A página **Diagnóstico** confere chave, câmera, microfone, alto-falante e conexão
-dentro do app, com dicas quando algo falha (roda sozinha na primeira visita). Em **Ajustes** você troca
-provedor, chave, modelos, câmera, voz e gravação: salva no `.env` (preservando o resto do arquivo) e
-aplica na hora, sem reiniciar. A chave atual nunca é exibida. **F11** (ou o botão **Tela cheia**) alterna a tela cheia; `Esc` também sai dela.
+## 4. Como usar
 
-**Textos longos:** perguntas e respostas grandes ganham barra de rolagem na própria caixa, então dá
-para ler tudo até o fim. A janela abre num tamanho que cabe na sua tela (sem ficar atrás da barra de
-tarefas do Windows).
+1. Clique em **🎤 Clique para falar** (ou `Ctrl+Espaço`), faça a pergunta e fique em silêncio: a
+   gravação para sozinha. Também dá para clicar em **■ Parar e enviar** ou digitar a pergunta e
+   apertar `Enter`.
+2. No instante em que você termina de falar, a câmera tira a foto que vai junto com a pergunta.
+3. A resposta aparece na tela e é falada. Durante a fala, o botão vira **■ Interromper fala**
+   (`Esc`). Use **Repetir** para ouvir de novo.
+4. As perguntas seguintes entram na mesma conversa, com o contexto das últimas trocas.
 
-**Conversas (barra lateral):** cada conversa é salva automaticamente, e a barra à esquerda lista
-todas, agrupadas por dia e com busca.
+A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever → Analisar → Falar**
+(RF05). Perguntas e respostas longas ganham barra de rolagem na própria caixa.
 
-- **＋ Nova conversa** (ou `Ctrl+N`) começa um chat novo e zera o contexto; as anteriores continuam salvas.
-- Clique em uma conversa para reabri-la com as perguntas, fotos e respostas; novas perguntas **continuam
-  nela**, e o modelo recebe as últimas trocas como contexto.
-- **↻** relê o que está salvo em disco (traz conversas novas, inclusive de outra janela do app).
-- **🗑 Apagar conversa** (ou botão direito na conversa) remove os registros e as fotos, com confirmação.
+### Páginas do app
 
-Tudo fica em `registros/` (`interacoes.jsonl` + fotos em `registros/AAAA-MM-DD/`). Para desligar a
-gravação, use `SALVAR_HISTORICO=false`.
+A barra de ícones à esquerda leva às páginas (também por `Ctrl+1` a `Ctrl+4`):
 
-A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever → Analisar → Falar** (RF05).
+| Página | Para que serve |
+|---|---|
+| **Assistente** | Fazer perguntas, ver a foto, a resposta e as conversas |
+| **Diagnóstico** | Conferir chave, câmera, microfone, alto-falante e conexão, com dicas quando algo falha |
+| **Ajustes** | Trocar provedor, chave, modelos, câmera, voz e gravação; salva no `.env` e aplica sem reiniciar |
+| **Ajuda** | Como usar, atalhos de teclado e informações do app |
 
-## 4. Testes
+**F11** (ou o botão **Tela cheia**) alterna a tela cheia; `Esc` também sai dela. Detalhes em
+[docs/README_INTERFACE.md](docs/README_INTERFACE.md).
+
+### Conversas
+
+Cada pergunta é salva automaticamente na conversa atual. A barra **Conversas** lista todas,
+agrupadas por dia e com busca:
+
+- **Nova conversa** (`Ctrl+N`) começa um chat novo e zera o contexto; as anteriores continuam salvas.
+- Clique em uma conversa para reabri-la; novas perguntas **continuam nela**.
+- **↻** relê o que está salvo em disco.
+- **Apagar conversa** (ou botão direito sobre ela) remove os registros e as fotos, com confirmação.
+
+Tudo fica em `registros/` (`interacoes.jsonl` e as fotos em `registros/AAAA-MM-DD/`). Detalhes em
+[docs/README_CONVERSAS.md](docs/README_CONVERSAS.md).
+
+### Atalhos
+
+| Tecla | Ação |
+|---|---|
+| `Ctrl+Espaço` | Começa a ouvir; de novo, para e envia |
+| `Enter` | Envia a pergunta digitada |
+| `Esc` | Interrompe a gravação ou a fala; sai da tela cheia |
+| `Ctrl+N` | Nova conversa |
+| `Ctrl+1` … `Ctrl+4` | Assistente, Diagnóstico, Ajustes e Ajuda |
+| `F11` | Tela cheia |
+
+## 5. Configuração (`.env`)
+
+Quase tudo pode ser alterado pela página **Ajustes**, que atualiza o `.env` preservando o restante
+do arquivo. Referência completa:
+
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `PROVEDOR` | `openai` (o `.env.example` já vem com `gemini`) | `gemini` ou `openai` |
+| `GEMINI_API_KEY` / `OPENAI_API_KEY` | — | Chave do provedor escolhido (**obrigatória**) |
+| `MODELO_VISAO` | `gemini-3.8-flash` · `gpt-4.1-mini` | Modelo multimodal (imagem + pergunta) |
+| `MODELO_STT` | `gemini-3.8-flash` · `gpt-4o-mini-transcribe` | Transcrição da fala |
+| `MODELO_TTS` | `gemini-3.8-flash-tts` · `gpt-4o-mini-tts` | Síntese de voz |
+| `VOZ_TTS` | `Kore` · `alloy` | Nome da voz |
+| `IDIOMA` | `pt` | Idioma da transcrição |
+| `CAMERA` | `0` | Índice da webcam (`0`, `1`…) ou caminho de vídeo/imagem |
+| `IMAGEM_LADO_MAX` | `1024` | Maior lado da foto enviada, em pixels |
+| `SILENCIO_SEG` | `1.3` | Segundos de silêncio que encerram a gravação |
+| `GRAVACAO_MAX_SEG` | `15` | Duração máxima da pergunta, em segundos |
+| `SEM_FALA_SEG` | `6` | Segundos sem fala até avisar "Não ouvi nenhuma pergunta" |
+| `TIMEOUT_REQUISICAO` | `30` | Tempo máximo de cada chamada à API, em segundos |
+| `TENTATIVAS_API` | `2` | Novas tentativas em falhas temporárias da API |
+| `TTS_ATIVO` | `true` | Falar as respostas |
+| `TTS_OFFLINE_FALLBACK` | `true` | Usar a voz do computador (pyttsx3) se a voz online falhar |
+| `SALVAR_HISTORICO` | `true` | Salvar as conversas |
+| `PASTA_HISTORICO` / `PASTA_LOGS` | `registros/` / `logs/` | Onde ficam as conversas e os logs |
+| `OPENAI_BASE_URL` | — | Endereço alternativo da API (avançado) |
+
+Nas colunas com dois valores, o primeiro é o padrão do Gemini e o segundo, o da OpenAI. Deixe os
+`MODELO_*` e `VOZ_TTS` vazios para usar o padrão do provedor escolhido.
+
+Os nomes de modelos mudam com o tempo: se o Diagnóstico disser que um modelo não está disponível
+para a sua conta, troque-o em **Ajustes** por um modelo atual com suporte a imagem.
+
+## 6. Trocando de provedor (Gemini ⇄ OpenAI)
+
+O projeto funciona com os dois, sem mudança de código. A forma mais simples é a página **Ajustes**:
+escolha o provedor, cole a chave dele (se ainda não houver) e salve. Os modelos padrão são trocados
+juntos, e a mudança vale na próxima pergunta.
+
+Pelo `.env`, mude `PROVEDOR` e preencha a chave correspondente; se tiver definido `MODELO_*` ou
+`VOZ_TTS` à mão, ajuste-os também.
+
+## 7. Testes
 
 ```bash
 pytest
 ```
 
-169 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
-simulado). Incluem falha de conexão, timeout, erros HTTP da API, câmera indisponível, microfone
-ausente, falha de voz e responsividade da interface. Detalhes em
-[`docs/REGISTRO_DE_TESTES.md`](docs/REGISTRO_DE_TESTES.md).
+**169 testes automatizados**, sem usar rede, câmera ou microfone reais (dublês e transporte HTTP
+simulado). Cobrem o fluxo completo, falha de conexão, timeout, erros HTTP da API, câmera
+indisponível, microfone ausente, falha de voz, responsividade da interface, conversas, navegação,
+Diagnóstico e Ajustes. Os testes nunca gravam no seu `.env`. Detalhes e o roteiro de testes
+manuais em [docs/REGISTRO_DE_TESTES.md](docs/REGISTRO_DE_TESTES.md).
 
-## 5. Estrutura
+## 8. Estrutura
 
 ```
-projeto_visao_llm/
-├── main.py                    # atalho: python main.py
+projeto-visao-llm/
+├── main.py                      # atalho: python main.py
 ├── requirements.txt
-├── .env.example               # modelo de configuração (copie para .env)
+├── .env.example                 # modelo de configuração (copie para .env)
 ├── visao_llm/
-│   ├── __main__.py            # argumentos de linha de comando
-│   ├── config.py              # leitura do .env / variáveis de ambiente (RNF01)
-│   ├── errors.py              # erros com mensagens amigáveis (RNF02)
-│   ├── camera.py              # webcam via OpenCV, redimensiona e gera JPEG (RF01)
-│   ├── audio.py               # microfone com detecção de silêncio; reprodução (RF02/RF04)
-│   ├── openai_service.py      # STT, modelo de visão e TTS da OpenAI + tradução de erros (RF02–RF04)
-│   ├── gemini_service.py      # STT e TTS do Gemini (a visão reaproveita o openai_service)
-│   ├── speaker.py             # fala a resposta; cai para voz offline se a API falhar
-│   ├── pipeline.py            # orquestra o fluxo completo, independente da interface
-│   ├── history.py             # salva, agrupa em conversas, relê e apaga registros em registros/
-│   ├── factory.py             # monta os serviços reais a partir da configuração
-│   ├── diagnostics.py         # python main.py --diagnostico
-│   └── gui/                   # PyQt5: janela, threads de trabalho, estilo (RF05/RNF03)
-├── tests/                     # pytest
-└── docs/
-    ├── ARQUITETURA.md         # arquitetura, requisitos e fluxo de dados
-    └── REGISTRO_DE_TESTES.md  # testes automatizados + roteiro de demonstração
+│   ├── __main__.py              # opções de linha de comando
+│   ├── config.py                # leitura do .env e padrões por provedor (RNF01)
+│   ├── env_file.py              # atualização segura do .env (página Ajustes)
+│   ├── errors.py                # erros com mensagens amigáveis (RNF02)
+│   ├── models.py                # estados da interface e resultado de uma interação
+│   ├── camera.py                # webcam via OpenCV; redimensiona e gera JPEG (RF01)
+│   ├── audio.py                 # microfone com detecção de silêncio; reprodução (RF02/RF04)
+│   ├── openai_service.py        # transcrição, visão e voz da OpenAI + tradução de erros
+│   ├── gemini_service.py        # transcrição e voz do Gemini (a visão reaproveita a anterior)
+│   ├── speaker.py               # fala a resposta; usa a voz offline se a online falhar
+│   ├── pipeline.py              # orquestra o fluxo e as conversas, sem depender da interface
+│   ├── history.py               # salva, agrupa em conversas, relê e apaga registros
+│   ├── factory.py               # monta os serviços do provedor escolhido
+│   ├── diagnostics.py           # verificações do ambiente (terminal e página)
+│   ├── logging_setup.py         # logs em console e em logs/app.log
+│   └── gui/                     # interface PyQt5 (RF05/RNF03)
+│       ├── app.py               # inicialização do Qt
+│       ├── main_window.py       # janela, páginas, atalhos, tela cheia, aplicação dos ajustes
+│       ├── navigation.py        # barra de navegação
+│       ├── sidebar.py           # barra de conversas
+│       ├── diagnostics_page.py  # página Diagnóstico
+│       ├── settings_page.py     # página Ajustes
+│       ├── help_page.py         # página Ajuda
+│       ├── workers.py           # câmera e perguntas em threads separadas
+│       ├── widgets.py           # cartões, imagens, textos roláveis, interruptor
+│       ├── icons.py             # ícones vetoriais
+│       └── style.py             # tema (paleta e folha de estilo)
+├── tests/                       # pytest
+└── docs/                        # documentação (veja a seção 11)
 ```
 
-## 6. Configuração (`.env`)
+`registros/`, `logs/` e `.env` ficam fora do git.
 
-| Variável | Padrão | Descrição |
-|---|---|---|
-| `PROVEDOR` | `openai` | `gemini` ou `openai` (também por `--provedor`) |
-| `GEMINI_API_KEY` / `OPENAI_API_KEY` | — | chave do provedor escolhido (**obrigatória**) |
-| `MODELO_VISAO` | `gemini-3.8-flash` · `gpt-4.1-mini` | modelo multimodal (aceita imagem) |
-| `MODELO_STT` | `gemini-3.8-flash` · `gpt-4o-mini-transcribe` | transcrição da fala |
-| `MODELO_TTS` / `VOZ_TTS` | `gemini-3.8-flash-tts` / `Kore` · `gpt-4o-mini-tts` / `alloy` | síntese de voz |
-| `CAMERA` | `0` | índice da webcam ou caminho de vídeo/imagem |
-| `SILENCIO_SEG` | `1.3` | segundos de silêncio que encerram a gravação |
-| `GRAVACAO_MAX_SEG` | `15` | duração máxima da pergunta |
-| `TIMEOUT_REQUISICAO` / `TENTATIVAS_API` | `30` / `2` | rede |
-| `TTS_OFFLINE_FALLBACK` | `true` | usa voz local (pyttsx3) se a TTS online falhar |
-| `SALVAR_HISTORICO` | `true` | grava as interações em `registros/` |
+## 9. Solução de problemas
 
-Os nomes de modelos mudam com o tempo: se o diagnóstico disser que um modelo não está
-disponível para sua conta, troque-o no `.env` por um modelo atual com suporte a imagem.
-
-## 7. Trocando de provedor (Gemini ⇄ OpenAI)
-
-O projeto funciona com os dois. Para alternar, basta mudar `PROVEDOR` no `.env` e ter a chave do
-provedor escolhido preenchida — não há mudança de código. Cada provedor usa seus próprios modelos
-padrão; se você sobrescrever `MODELO_*`, lembre de ajustar ao trocar.
-
-## 8. Solução de problemas
+Comece pela página **Diagnóstico**: ela mostra o que está falhando e o que fazer.
 
 | Sintoma | O que fazer |
 |---|---|
-| "Câmera indisponível" | Feche outros apps que usam a webcam (Teams, Zoom, navegador); tente `--camera 1`. O app reconecta sozinho a cada 3 s. |
+| "Câmera indisponível" | Feche outros apps que usam a webcam (Teams, Zoom, navegador) ou escolha outra câmera em Ajustes. O app reconecta sozinho a cada 3 s. |
 | "Biblioteca de áudio indisponível" | Linux: `sudo apt install libportaudio2`. Enquanto isso, digite a pergunta. |
-| "Não ouvi nenhuma pergunta" | Fale mais perto do microfone; confira o microfone padrão do sistema. |
-| "Chave da API inválida" | Confira `GEMINI_API_KEY`/`OPENAI_API_KEY` (a que corresponde ao `PROVEDOR`) e reinicie. |
-| "Limite de uso da API" | Sem créditos ou muitas requisições — aguarde ou recarregue créditos. |
-| Resposta aparece mas não é falada | Aviso amarelo explica o motivo; a resposta em texto continua válida. |
+| "Não ouvi nenhuma pergunta" | Fale mais perto do microfone e confira o microfone padrão do sistema. |
+| "Chave da API inválida" | Cole a chave certa em Ajustes (a do provedor escolhido). |
+| "Limite de uso da API" | Muitas requisições ou sem créditos: aguarde ou confira a conta do provedor. |
+| "Modelo não encontrado" | Use **Restaurar padrões** em Ajustes ou informe um modelo atual. |
+| Resposta aparece, mas não é falada | O aviso amarelo explica o motivo; a resposta em texto continua válida. |
 
 Logs completos ficam em `logs/app.log`.
 
-## 9. Limitações conhecidas
+## 10. Limitações conhecidas
 
-- **Gravação do histórico acontece no fim do fluxo.** A conversa só é salva depois que a resposta
-  é exibida **e** a voz termina (ou falha). Fechar o app normalmente durante a *reprodução* da voz
-  ainda salva, pois a fala é interrompida e o fluxo conclui. Mas se o app for fechado durante a
-  *geração* da voz (uma chamada de rede que leva alguns segundos), ou travar ou for encerrado à
-  força antes do fim, **aquela pergunta não fica salva** (a resposta aparece na tela, mas não no
-  histórico). As perguntas anteriores não são afetadas.
-- Com `SALVAR_HISTORICO=false` nada é gravado e a barra lateral mostra um aviso.
+- **A conversa é salva no fim do fluxo.** Cada pergunta só é gravada depois que a resposta é
+  exibida **e** a voz termina (ou falha). Fechar o app durante a *reprodução* da voz ainda salva,
+  pois a fala é interrompida e o fluxo conclui. Mas se o app for fechado durante a *geração* da
+  voz (uma chamada de rede de alguns segundos), travar ou for encerrado à força antes do fim,
+  **aquela pergunta não fica salva** (a resposta aparece na tela, mas não no histórico). As
+  perguntas anteriores não são afetadas.
+- Com `SALVAR_HISTORICO=false` (ou a opção desligada em Ajustes) nada é gravado, e a barra de
+  conversas mostra um aviso.
+- O microfone usado é sempre o padrão do sistema.
 
-Detalhes e a correção planejada: [`docs/README_DESENVOLVIMENTO.md`](docs/README_DESENVOLVIMENTO.md#limitações-conhecidas).
+Detalhes e a correção planejada em
+[docs/README_DESENVOLVIMENTO.md](docs/README_DESENVOLVIMENTO.md#5-limitações-conhecidas).
 
-## 10. Documentação do desenvolvimento
+## 11. Documentação
 
-O que foi feito, o estado atual, o que falta e como contribuir: [`docs/README_DESENVOLVIMENTO.md`](docs/README_DESENVOLVIMENTO.md).
+| Documento | Conteúdo |
+|---|---|
+| [docs/README_INTERFACE.md](docs/README_INTERFACE.md) | Navegação, tela cheia, páginas Assistente, Diagnóstico, Ajustes e Ajuda, e o visual |
+| [docs/README_CONVERSAS.md](docs/README_CONVERSAS.md) | Conversas salvas e barra lateral: nova, abrir, continuar, buscar, atualizar e apagar |
+| [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Requisitos, camadas, decisões de projeto e fluxo de dados |
+| [docs/REGISTRO_DE_TESTES.md](docs/REGISTRO_DE_TESTES.md) | Testes automatizados e roteiro de testes manuais |
+| [docs/README_DESENVOLVIMENTO.md](docs/README_DESENVOLVIMENTO.md) | Como o projeto foi construído, estado atual, o que falta e como contribuir |
