@@ -41,7 +41,7 @@ class NetworkError(AppError):
 
 
 class APIError(AppError):
-    titulo = "API OpenAI"
+    titulo = "API"
 
 
 class SpeakerError(AppError):
