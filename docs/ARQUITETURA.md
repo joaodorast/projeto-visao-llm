@@ -6,7 +6,7 @@
 
 O sistema permite que o usuário faça perguntas por voz sobre o ambiente à frente da webcam. A
 cada pergunta, uma foto é capturada no momento em que o usuário termina de falar; a pergunta é
-transcrita (STT), enviada junto com a imagem a um modelo multimodal da OpenAI, e a resposta é
+transcrita (STT), enviada junto com a imagem a um modelo multimodal (Gemini ou OpenAI, conforme `PROVEDOR`), e a resposta é
 exibida na tela e falada no alto-falante (TTS).
 
 ```
@@ -20,11 +20,11 @@ Webcam + Microfone → Captura e STT → API (modelo multimodal) → Resposta te
 | ID | Requisito | Implementação | Testes |
 |---|---|---|---|
 | RF01 | Capturar imagens por webcam | `camera.py` (`Camera`, `encode_jpeg`); `gui/workers.py` (`CameraThread`) | CT03–CT05 |
-| RF02 | Reconhecer perguntas pelo microfone | `audio.py` (`AudioRecorder`, `SilenceDetector`); `openai_service.SpeechToText` | CT06–CT08, CT13 |
+| RF02 | Reconhecer perguntas pelo microfone | `audio.py` (`AudioRecorder`, `SilenceDetector`); `openai_service.SpeechToText` / `gemini_service.GeminiSpeechToText` | CT06–CT08, CT13 |
 | RF03 | Enviar imagem e pergunta a um modelo multimodal | `openai_service.VisionAssistant` (Chat Completions com imagem em base64) | CT09 |
-| RF04 | Exibir resposta textual e reproduzi-la em áudio | `openai_service.TextToSpeech`, `speaker.py`, `gui/main_window.py` | CT14, CT19–CT21 |
+| RF04 | Exibir resposta textual e reproduzi-la em áudio | `openai_service.TextToSpeech` / `gemini_service.GeminiTextToSpeech`, `speaker.py`, `gui/main_window.py` | CT14, CT19–CT21 |
 | RF05 | Interface com estados de captura, processamento e resposta | `models.State`, `gui/widgets.StepIndicator`, indicador de status | CT15, CT21, CT25 |
-| RNF01 | Chave da API fora do código-fonte | `config.py` lê `OPENAI_API_KEY` do ambiente/`.env` (ignorado pelo git); a chave não aparece em `repr`/logs | CT01, CT02 + varredura do código |
+| RNF01 | Chave da API fora do código-fonte | `config.py` lê `GEMINI_API_KEY` ou `OPENAI_API_KEY` (conforme `PROVEDOR`) do ambiente/`.env` (ignorado pelo git); a chave não aparece em `repr`/logs | CT01, CT02 + varredura do código |
 | RNF02 | Tratar falhas de câmera, microfone, conexão e API sem encerrar | `errors.py` (hierarquia com mensagens amigáveis); `openai_service.api_errors`; reconexão automática da câmera; `sys.excepthook` na GUI | CT03, CT06–CT08, CT10–CT12, CT17–CT20, CT22–CT24 |
 | RNF03 | Interface responsiva durante chamadas de rede | Todo o fluxo roda em `QThread` (`InteractionWorker`); comunicação com a GUI por sinais Qt | CT25 |
 
@@ -50,7 +50,11 @@ Webcam + Microfone → Captura e STT → API (modelo multimodal) → Resposta te
 
 - **Inversão de dependência:** o `Assistant` recebe seus componentes por meio de interfaces
   (`Protocol`). Isso permite testar todo o fluxo sem câmera, microfone ou internet, e trocar o
-  provedor (por exemplo, outro modelo) sem mexer na interface.
+  provedor sem mexer na interface: `factory.py` escolhe as implementações de STT, visão e TTS
+  de acordo com `PROVEDOR` (OpenAI ou Gemini).
+- **Gemini pelo SDK da OpenAI:** o Gemini oferece um endpoint compatível, então a visão reutiliza
+  `VisionAssistant` e a transcrição usa `input_audio` em uma chamada de chat. Esse endpoint não
+  tem TTS, que usa a API nativa `generateContent` (`gemini_service.GeminiTextToSpeech`).
 - **Erros como parte do domínio:** toda falha conhecida vira uma subclasse de `AppError` com
   mensagem em português pronta para exibição. Exceções do SDK da OpenAI são traduzidas em um
   único ponto (`api_errors`).
@@ -73,7 +77,7 @@ sequenceDiagram
     participant W as InteractionWorker (QThread)
     participant M as Microfone
     participant C as CameraThread
-    participant O as API OpenAI
+    participant O as API do provedor (Gemini/OpenAI)
     participant A as Alto-falante
 
     U->>G: clica "Clique para falar"
