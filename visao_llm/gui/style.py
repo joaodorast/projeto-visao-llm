@@ -238,6 +238,32 @@ QPushButton#primary:disabled {{ background: {BORDER_STRONG}; color: {MUTED}; }}
 #diagSummary[estado="ok"]      {{ background: {SURFACE}; color: {TEXT}; border-left: 3px solid {ACCENT}; }}
 #diagSummary[estado="falha"]   {{ background: #fef2f2; color: #991b1b; border-color: #fecaca; }}
 
+QComboBox, QDoubleSpinBox {{
+    background: {SURFACE}; border: 1px solid {BORDER_STRONG}; border-radius: 8px;
+    padding: 8px 12px; min-height: 20px;
+}}
+QComboBox:focus, QDoubleSpinBox:focus {{ border-color: {ACCENT}; }}
+QComboBox::drop-down {{ border: none; width: 28px; }}
+QComboBox QAbstractItemView {{
+    background: {SURFACE}; border: 1px solid {BORDER}; selection-background-color: {ACCENT_SOFT};
+    selection-color: {ACCENT_TEXT}; outline: none; padding: 4px;
+}}
+QCheckBox {{ spacing: 10px; color: {TEXT_2}; padding: 4px 0; }}
+QCheckBox::indicator {{
+    width: 18px; height: 18px; border-radius: 5px; border: 1px solid {BORDER_STRONG};
+    background: {SURFACE};
+}}
+QCheckBox::indicator:hover {{ border-color: {ACCENT}; }}
+QCheckBox::indicator:checked {{ background: {ACCENT}; border-color: {ACCENT}; }}
+#pageBody QLabel {{ color: {TEXT_2}; }}
+#pageBody QLabel#pageTitle {{ color: {TEXT}; }}
+#pageBody QLabel#hint {{ color: {MUTED}; }}
+#settingsStatus {{
+    border-radius: 12px; padding: 12px 16px; font-size: 14px;
+    background: {SURFACE}; border: 1px solid {BORDER}; border-left: 3px solid {ACCENT}; color: {TEXT};
+}}
+#settingsStatus[estado="erro"] {{ background: #fef2f2; color: #991b1b; border-color: #fecaca; }}
+
 QToolTip {{
     background: {GRAPHITE}; color: {ON_DARK}; border: 1px solid {GRAPHITE_3};
     border-radius: 6px; padding: 6px 8px;
