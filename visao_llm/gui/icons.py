@@ -31,11 +31,17 @@ def _desenhar(forma: Callable[[QPainter], None], cor: str) -> QPixmap:
     return pix
 
 
-def _icone(forma: Callable[[QPainter], None], normal: str, ativo: str, desativado: str) -> QIcon:
+def _icone(forma: Callable[[QPainter], None], normal: str, ativo: str, desativado: str,
+           marcado: str | None = None) -> QIcon:
+    """`marcado` é a cor quando o botão está selecionado (botões checáveis, como a navegação)."""
     icone = QIcon()
     icone.addPixmap(_desenhar(forma, normal), QIcon.Normal)
     icone.addPixmap(_desenhar(forma, ativo), QIcon.Active)
     icone.addPixmap(_desenhar(forma, desativado), QIcon.Disabled)
+    if marcado is not None:
+        selecionado = _desenhar(forma, marcado)
+        icone.addPixmap(selecionado, QIcon.Normal, QIcon.On)
+        icone.addPixmap(selecionado, QIcon.Active, QIcon.On)
     return icone
 
 
@@ -85,3 +91,72 @@ def plus_icon() -> QIcon:
 
 def search_icon() -> QIcon:
     return _icone(_lupa, "#a1a1aa", "#f4f4f5", "#63636b")
+
+
+# --- navegação ----------------------------------------------------------------
+def _balao(p: QPainter) -> None:
+    balao = QPainterPath()
+    balao.addRoundedRect(QRectF(3, 3.5, 14, 10.5), 3, 3)
+    p.drawPath(balao)
+    p.drawLine(QPointF(7, 14), QPointF(6, 17))
+    p.drawLine(QPointF(6, 17), QPointF(10, 14))
+    p.drawLine(QPointF(6.8, 7.6), QPointF(13.2, 7.6))
+    p.drawLine(QPointF(6.8, 10.2), QPointF(11, 10.2))
+
+
+def _pulso(p: QPainter) -> None:
+    linha = QPainterPath()
+    linha.moveTo(2.5, 10.5)
+    for x, y in ((6, 10.5), (8, 5), (11.5, 15.5), (13.5, 10.5), (17.5, 10.5)):
+        linha.lineTo(x, y)
+    p.drawPath(linha)
+
+
+def _engrenagem(p: QPainter) -> None:
+    import math
+    centro = QPointF(10, 10)
+    p.drawEllipse(centro, 2.6, 2.6)
+    p.drawEllipse(centro, 5.6, 5.6)
+    for i in range(8):
+        ang = math.radians(i * 45)
+        p.drawLine(QPointF(10 + 5.6 * math.cos(ang), 10 + 5.6 * math.sin(ang)),
+                   QPointF(10 + 7.8 * math.cos(ang), 10 + 7.8 * math.sin(ang)))
+
+
+def _ajuda(p: QPainter) -> None:
+    p.drawEllipse(QPointF(10, 10), 7.5, 7.5)
+    interrogacao = QPainterPath()
+    interrogacao.moveTo(7.6, 8)
+    interrogacao.cubicTo(7.6, 5, 12.4, 5, 12.4, 8)
+    interrogacao.cubicTo(12.4, 9.6, 10, 9.8, 10, 11.6)
+    p.drawPath(interrogacao)
+    p.drawPoint(QPointF(10, 14.2))
+
+
+def _tela_cheia(p: QPainter) -> None:
+    for (x, y, dx, dy) in ((3.5, 3.5, 1, 1), (16.5, 3.5, -1, 1), (3.5, 16.5, 1, -1), (16.5, 16.5, -1, -1)):
+        p.drawLine(QPointF(x, y), QPointF(x + 4 * dx, y))
+        p.drawLine(QPointF(x, y), QPointF(x, y + 4 * dy))
+
+
+_CORES_NAV = dict(normal="#8b8b94", ativo="#f4f4f5", desativado="#52525b", marcado="#f97316")
+
+
+def chat_icon() -> QIcon:
+    return _icone(_balao, **_CORES_NAV)
+
+
+def pulse_icon() -> QIcon:
+    return _icone(_pulso, **_CORES_NAV)
+
+
+def gear_icon() -> QIcon:
+    return _icone(_engrenagem, **_CORES_NAV)
+
+
+def help_icon() -> QIcon:
+    return _icone(_ajuda, **_CORES_NAV)
+
+
+def fullscreen_icon() -> QIcon:
+    return _icone(_tela_cheia, **_CORES_NAV)
