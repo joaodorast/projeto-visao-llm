@@ -36,12 +36,12 @@ Webcam + Microfone → Captura e STT → API (modelo multimodal) → Resposta te
 └───────────────────────────────────┬──────────────────────────────────────────┘
                                     │ Callbacks (estado, imagem, pergunta, resposta)
 ┌───────────────────────────── Aplicação ──────────────────────────────────────┐
-│ pipeline.Assistant — orquestra o fluxo; não conhece Qt nem a OpenAI diretamente │
+│ pipeline.Assistant — orquestra o fluxo; não conhece Qt nem o provedor diretamente │
 └──────┬──────────────┬───────────────┬────────────────┬───────────────┬───────┘
        │ FrameProvider │ Recorder       │ Transcriber    │ Vision        │ Voice / Store
 ┌──────▼─────┐ ┌──────▼──────┐ ┌──────▼───────┐ ┌──────▼───────┐ ┌─────▼──────────────┐
 │ camera.py  │ │ audio.py    │ │ SpeechToText │ │VisionAssistant│ │ speaker.py / history│
-│ (OpenCV)   │ │(sounddevice)│ │  (OpenAI)    │ │  (OpenAI)     │ │ (OpenAI TTS/pyttsx3)│
+│ (OpenCV)   │ │(sounddevice)│ │ (Gemini/OpenAI)│ │(Gemini/OpenAI)│ │(TTS online/pyttsx3) │
 └────────────┘ └─────────────┘ └──────────────┘ └───────────────┘ └────────────────────┘
                      Infraestrutura: config.py · errors.py · logging_setup.py
 ```
@@ -56,7 +56,7 @@ Webcam + Microfone → Captura e STT → API (modelo multimodal) → Resposta te
   `VisionAssistant` e a transcrição usa `input_audio` em uma chamada de chat. Esse endpoint não
   tem TTS, que usa a API nativa `generateContent` (`gemini_service.GeminiTextToSpeech`).
 - **Erros como parte do domínio:** toda falha conhecida vira uma subclasse de `AppError` com
-  mensagem em português pronta para exibição. Exceções do SDK da OpenAI são traduzidas em um
+  mensagem em português pronta para exibição. Exceções do SDK (OpenAI/Gemini) são traduzidas em um
   único ponto (`api_errors`).
 - **Imagem no momento da pergunta:** a foto é tirada logo após o fim da fala e antes da
   transcrição — reflete a cena no instante da pergunta e evita gastar chamadas pagas se a câmera
