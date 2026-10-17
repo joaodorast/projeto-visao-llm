@@ -7,11 +7,12 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from PyQt5.QtCore import QTimer, Qt, pyqtSignal
+from PyQt5.QtCore import QSize, QTimer, Qt, pyqtSignal
 from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMenu,
                              QPushButton, QVBoxLayout, QWidget)
 
 from ..history import Conversation
+from .icons import plus_icon, search_icon, trash_icon
 
 QUADROS = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"  # animação de carregamento (um quadro a cada 55 ms)
 INTERVALO_MS = 55
@@ -68,7 +69,9 @@ class ConversationSidebar(QFrame):
         self._spinner.setInterval(INTERVALO_MS)
         self._spinner.timeout.connect(self._girar)
         self._quadro = 0
-        self.new_button = QPushButton("＋  Nova conversa", objectName="newChat")
+        self.new_button = QPushButton("  Nova conversa", objectName="newChat")
+        self.new_button.setIcon(plus_icon())
+        self.new_button.setIconSize(QSize(18, 18))
         self.new_button.setCursor(Qt.PointingHandCursor)
         self.new_button.setToolTip("Começa uma conversa nova; as anteriores continuam salvas (Ctrl+N)")
         self.new_button.clicked.connect(self.new_requested)
@@ -77,6 +80,7 @@ class ConversationSidebar(QFrame):
         self.search = QLineEdit()
         self.search.setPlaceholderText("Buscar conversas…")
         self.search.setClearButtonEnabled(True)
+        self.search.addAction(search_icon(), QLineEdit.LeadingPosition)
         self.search.textChanged.connect(self._populate)
         lay.addWidget(self.search)
 
@@ -92,7 +96,10 @@ class ConversationSidebar(QFrame):
         self.hint.setWordWrap(True)
         lay.addWidget(self.hint)
 
-        self.delete_button = QPushButton("🗑  Apagar conversa", objectName="danger")
+        self.delete_button = QPushButton("  Apagar conversa", objectName="danger")
+        self.delete_button.setIcon(trash_icon())
+        self.delete_button.setIconSize(QSize(18, 18))
+        self.delete_button.setToolTip("Apaga a conversa selecionada e as fotos dela (pede confirmação)")
         self.delete_button.setCursor(Qt.PointingHandCursor)
         self.delete_button.clicked.connect(self._on_delete_clicked)
         lay.addWidget(self.delete_button)
