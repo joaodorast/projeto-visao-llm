@@ -89,15 +89,22 @@ class HelpPage(QScrollArea):
             "para apagar (pede confirmação)."
             f"<br><br>Os registros ficam em <code>{config.history_dir}</code> "
             "(<code>interacoes.jsonl</code> e as fotos por dia). Para não gravar nada, defina "
-            "<code>SALVAR_HISTORICO=false</code>."))
+            "<code>SALVAR_HISTORICO=false</code> (ou desligue em <b>Ajustes</b>)."
+            "<br><br>Provedor, chave, modelos, câmera e voz podem ser trocados na página "
+            "<b>Ajustes</b>, sem reiniciar o app."))
         lay.addWidget(dados)
 
         # --- sobre
         sobre = Card("Sobre")
-        sobre.add(_texto(
+        self.sobre_label = _texto("")
+        sobre.add(self.sobre_label)
+        lay.addWidget(sobre)
+        self.set_config(config)
+        lay.addStretch(1)
+
+    def set_config(self, config: Config) -> None:
+        self.sobre_label.setText(
             f"<b>Visão e Interpretação do Ambiente</b> · versão {__version__}<br>"
             f"Provedor: <b>{config.provider.capitalize()}</b> · visão <code>{config.vision_model}</code> · "
             f"transcrição <code>{config.stt_model}</code> · voz <code>{config.tts_model}</code><br>"
-            "Documentação na pasta <code>docs/</code> do projeto."))
-        lay.addWidget(sobre)
-        lay.addStretch(1)
+            "Documentação na pasta <code>docs/</code> do projeto.")
