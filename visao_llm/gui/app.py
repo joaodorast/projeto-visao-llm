@@ -44,6 +44,7 @@ def run_gui(config: Config) -> int:
     app.aboutToQuit.connect(janela.shutdown)
     janela.show()
     if not config.api_key:
-        janela._show_error("Configuração", "OPENAI_API_KEY não definida. Copie .env.example "
-                                           "para .env, coloque sua chave e reinicie o app.")
+        janela._show_error("Configuração", "Chave da API não definida (OPENAI_API_KEY ou "
+                                           "GEMINI_API_KEY). Copie .env.example para .env, "
+                                           "coloque sua chave e reinicie o app.")
     return app.exec_()

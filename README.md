@@ -1,7 +1,7 @@
 # Projeto 1 — Visão e Interpretação do Ambiente com LLM
 
 Aplicação em Python que **ouve uma pergunta pelo microfone, tira uma foto pela webcam no
-momento da pergunta, envia imagem + pergunta para um modelo multimodal da OpenAI e responde
+momento da pergunta, envia imagem + pergunta para um modelo multimodal (**Gemini** ou **OpenAI**) e responde
 em voz alta**, mostrando na tela a imagem usada, a pergunta e a resposta.
 
 ![Interface](docs/img/interface.png)
@@ -16,7 +16,7 @@ em voz alta**, mostrando na tela a imagem usada, a pergunta e a resposta.
 |---|---|
 | Python | 3.10 ou superior |
 | Webcam e microfone | qualquer dispositivo reconhecido pelo sistema |
-| Chave da OpenAI | conta com créditos — <https://platform.openai.com/api-keys> |
+| Chave de API | **Gemini** (camada gratuita) — <https://aistudio.google.com/apikey> ou **OpenAI** (exige créditos) — <https://platform.openai.com/api-keys> |
 | Linux apenas | `sudo apt install libportaudio2 espeak-ng` (áudio e voz offline) |
 
 ## 2. Instalação
@@ -37,7 +37,7 @@ pip install -r requirements.txt
 
 # 4. Configure a chave (RNF01 — nunca no código)
 #    Windows: copy .env.example .env      Linux/macOS: cp .env.example .env
-#    Abra o .env e troque "coloque-sua-chave-aqui" pela sua chave.
+#    Abra o .env, escolha PROVEDOR=gemini (ou openai) e cole a chave correspondente.
 ```
 
 ## 3. Execução
@@ -48,6 +48,7 @@ python main.py --diagnostico      # testa chave, câmera, microfone, alto-falant
 python main.py --camera 1         # usa a segunda webcam
 python main.py --camera foto.jpg  # usa uma imagem/vídeo no lugar da webcam (demonstração)
 python main.py --sem-voz          # só texto, sem falar a resposta
+python main.py --provedor openai  # troca de provedor sem editar o .env
 ```
 
 **Como usar:** clique em **🎤 Clique para falar** (ou `Ctrl+Espaço`), faça a pergunta e fique em
@@ -62,7 +63,7 @@ A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever →
 pytest
 ```
 
-70 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
+91 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
 simulado). Incluem falha de conexão, timeout, erros HTTP da API, câmera indisponível, microfone
 ausente, falha de voz e responsividade da interface. Detalhes em
 [`docs/REGISTRO_DE_TESTES.md`](docs/REGISTRO_DE_TESTES.md).
@@ -80,7 +81,8 @@ projeto_visao_llm/
 │   ├── errors.py              # erros com mensagens amigáveis (RNF02)
 │   ├── camera.py              # webcam via OpenCV, redimensiona e gera JPEG (RF01)
 │   ├── audio.py               # microfone com detecção de silêncio; reprodução (RF02/RF04)
-│   ├── openai_service.py      # STT, modelo de visão e TTS + tradução de erros (RF02–RF04)
+│   ├── openai_service.py      # STT, modelo de visão e TTS da OpenAI + tradução de erros (RF02–RF04)
+│   ├── gemini_service.py      # STT e TTS do Gemini (a visão reaproveita o openai_service)
 │   ├── speaker.py             # fala a resposta; cai para voz offline se a API falhar
 │   ├── pipeline.py            # orquestra o fluxo completo, independente da interface
 │   ├── history.py             # salva imagem + pergunta + resposta em registros/
@@ -97,10 +99,11 @@ projeto_visao_llm/
 
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `OPENAI_API_KEY` | — | **obrigatória** |
-| `MODELO_VISAO` | `gpt-4.1-mini` | modelo multimodal (aceita imagem) |
-| `MODELO_STT` | `gpt-4o-mini-transcribe` | transcrição da fala (`whisper-1` também funciona) |
-| `MODELO_TTS` / `VOZ_TTS` | `gpt-4o-mini-tts` / `alloy` | síntese de voz |
+| `PROVEDOR` | `openai` | `gemini` ou `openai` (também por `--provedor`) |
+| `GEMINI_API_KEY` / `OPENAI_API_KEY` | — | chave do provedor escolhido (**obrigatória**) |
+| `MODELO_VISAO` | `gemini-3.8-flash` · `gpt-4.1-mini` | modelo multimodal (aceita imagem) |
+| `MODELO_STT` | `gemini-3.8-flash` · `gpt-4o-mini-transcribe` | transcrição da fala |
+| `MODELO_TTS` / `VOZ_TTS` | `gemini-3.8-flash-tts` / `Kore` · `gpt-4o-mini-tts` / `alloy` | síntese de voz |
 | `CAMERA` | `0` | índice da webcam ou caminho de vídeo/imagem |
 | `SILENCIO_SEG` | `1.3` | segundos de silêncio que encerram a gravação |
 | `GRAVACAO_MAX_SEG` | `15` | duração máxima da pergunta |
@@ -111,15 +114,25 @@ projeto_visao_llm/
 Os nomes de modelos mudam com o tempo: se o diagnóstico disser que um modelo não está
 disponível para sua conta, troque-o no `.env` por um modelo atual com suporte a imagem.
 
-## 7. Solução de problemas
+## 7. Trocando de provedor (Gemini ⇄ OpenAI)
+
+O projeto funciona com os dois. Para alternar, basta mudar `PROVEDOR` no `.env` e ter a chave do
+provedor escolhido preenchida — não há mudança de código. Cada provedor usa seus próprios modelos
+padrão; se você sobrescrever `MODELO_*`, lembre de ajustar ao trocar.
+
+## 8. Solução de problemas
 
 | Sintoma | O que fazer |
 |---|---|
 | "Câmera indisponível" | Feche outros apps que usam a webcam (Teams, Zoom, navegador); tente `--camera 1`. O app reconecta sozinho a cada 3 s. |
 | "Biblioteca de áudio indisponível" | Linux: `sudo apt install libportaudio2`. Enquanto isso, digite a pergunta. |
 | "Não ouvi nenhuma pergunta" | Fale mais perto do microfone; confira o microfone padrão do sistema. |
-| "Chave da API inválida" | Confira `OPENAI_API_KEY` no `.env` e reinicie. |
+| "Chave da API inválida" | Confira `GEMINI_API_KEY`/`OPENAI_API_KEY` (a que corresponde ao `PROVEDOR`) e reinicie. |
 | "Limite de uso da API" | Sem créditos ou muitas requisições — aguarde ou recarregue créditos. |
 | Resposta aparece mas não é falada | Aviso amarelo explica o motivo; a resposta em texto continua válida. |
 
 Logs completos ficam em `logs/app.log`.
+
+## 9. Documentação do desenvolvimento
+
+O que foi feito, o estado atual, o que falta e como contribuir: [`docs/README_DESENVOLVIMENTO.md`](docs/README_DESENVOLVIMENTO.md).

@@ -2,8 +2,8 @@
 
 O projeto tem duas camadas de teste:
 
-1. **Testes automatizados (pytest)** — 70 casos que rodam sem câmera, microfone ou internet,
-   usando dublês e um transporte HTTP simulado no próprio SDK da OpenAI. Reproduzíveis com `pytest`.
+1. **Testes automatizados (pytest)** — 91 casos que rodam sem câmera, microfone ou internet,
+   usando dublês e um transporte HTTP simulado no próprio SDK (OpenAI e Gemini). Reproduzíveis com `pytest`.
 2. **Testes manuais com hardware real** — roteiro para a demonstração (três cenas diferentes) e
    para as falhas físicas (desconectar internet e webcam). Preencher durante a apresentação.
 
@@ -12,14 +12,15 @@ O projeto tem duas camadas de teste:
 ## 1. Testes automatizados
 
 **Execução:** `pytest -v` · **Ambiente:** Python 3.13, Linux, Qt offscreen
-**Resultado:** ✅ **70 aprovados, 0 falhas** (17/10/2026)
+**Resultado:** ✅ **91 aprovados, 0 falhas** (17/10/2026)
 
 | Arquivo | Qtd. | Cobre |
 |---|---|---|
-| `test_config.py` | 11 | RNF01, leitura do `.env` |
+| `test_config.py` | 15 | RNF01, leitura do `.env` |
 | `test_camera.py` | 8 | RF01, RNF02 (câmera) |
 | `test_audio.py` | 11 | RF02, RNF02 (microfone/alto-falante) |
 | `test_openai_service.py` | 16 | RF02–RF04, RNF02 (conexão e API) |
+| `test_gemini_service.py` | 17 | RF02–RF04 com Gemini, RNF02, escolha de provedor |
 | `test_pipeline.py` | 18 | fluxo completo e falhas em cada etapa |
 | `test_gui.py` | 6 | RF05, RNF02, RNF03 na interface |
 
@@ -37,7 +38,7 @@ O projeto tem duas camadas de teste:
 | CT07 | RNF02 | Microfone desconectado durante a gravação | `MicrophoneError` | ✅ |
 | CT08 | RF02 | Usuário não fala nada | `NoSpeechError` "Não ouvi nenhuma pergunta" | ✅ |
 | CT09 | RF03 | Envio ao modelo multimodal | Requisição contém pergunta + JPEG em base64 + prompt de sistema | ✅ |
-| CT10 | RNF02 | **Falha de conexão** (DNS/rede) | `NetworkError` "Sem conexão com a OpenAI" | ✅ |
+| CT10 | RNF02 | **Falha de conexão** (DNS/rede) | `NetworkError` "Sem conexão com a API" | ✅ |
 | CT11 | RNF02 | **Timeout** da API | `NetworkError` "Tempo esgotado" | ✅ |
 | CT12 | RNF02 | HTTP 400/401/403/404/429/500/503 | `APIError` com mensagem específica para cada código | ✅ |
 | CT13 | RF02 | Transcrição (STT) | Envia WAV e idioma `pt`; texto limpo | ✅ |
@@ -74,7 +75,7 @@ Cada interação fica salva em `registros/` (foto + pergunta + resposta + tempos
 
 | # | Procedimento | Resultado esperado | Resultado obtido | OK? |
 |---|---|---|---|---|
-| F1 | Com o app aberto, **desligar o Wi-Fi/cabo** e fazer uma pergunta | Banner "Conexão: Sem conexão com a OpenAI…"; app continua aberto | | |
+| F1 | Com o app aberto, **desligar o Wi-Fi/cabo** e fazer uma pergunta | Banner "Conexão: Sem conexão com a API…"; app continua aberto | | |
 | F2 | Religar a internet e perguntar de novo | Funciona normalmente | | |
 | F3 | **Desconectar a webcam** com o app aberto | Selo "sem sinal" e mensagem "Tentando reconectar…" | | |
 | F4 | Perguntar com a webcam desconectada | Banner "Câmera: …"; nenhuma chamada à API | | |
