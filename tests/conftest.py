@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -101,3 +102,20 @@ def fakes():
 def http_response(status: int, json_body: dict | None = None) -> "httpx.Response":
     req = httpx.Request("POST", "https://api.openai.com/v1/test")
     return httpx.Response(status, json=json_body or {"error": {"message": "x"}}, request=req)
+
+
+@pytest.fixture(autouse=True)
+def proteger_env_real(monkeypatch):
+    """Nenhum teste pode gravar no .env de verdade do projeto (onde fica a chave da API)."""
+    from visao_llm import env_file
+    from visao_llm.config import RAIZ_PROJETO
+
+    original = env_file.update_env
+    real = (RAIZ_PROJETO / ".env").resolve()
+
+    def protegido(caminho, valores):
+        if Path(caminho).resolve() == real:
+            raise AssertionError("teste tentou gravar no .env real do projeto")
+        return original(caminho, valores)
+
+    monkeypatch.setattr(env_file, "update_env", protegido)
