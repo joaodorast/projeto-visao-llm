@@ -2,10 +2,27 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import QEvent, QObject, Qt, QSize
 from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QScrollArea, QSizePolicy,
-                             QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QScrollArea,
+                             QSizePolicy, QVBoxLayout, QWidget)
+
+
+class _RepassaRoda(QObject):
+    """Repassa a roda do mouse do texto para a área rolável.
+
+    Sem isso a roda só rola quando o ponteiro está sobre a barra ou o fundo, e não sobre o texto.
+    """
+
+    def __init__(self, area: QScrollArea):
+        super().__init__(area)
+        self._area = area
+
+    def eventFilter(self, obj, event) -> bool:  # noqa: N802
+        if event.type() == QEvent.Wheel:
+            QApplication.sendEvent(self._area.viewport(), event)
+            return True
+        return False
 
 
 def scrollable(label: QLabel) -> QScrollArea:
@@ -21,6 +38,7 @@ def scrollable(label: QLabel) -> QScrollArea:
     area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
     area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
     area.setWidget(label)
+    label.installEventFilter(_RepassaRoda(area))
     label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
     return area
 
