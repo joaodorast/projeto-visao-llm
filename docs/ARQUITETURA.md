@@ -65,6 +65,11 @@ Webcam + Microfone → Captura e STT → API (modelo multimodal) → Resposta te
   JPEG; a resposta é limitada a frases curtas (vai ser falada).
 - **Contexto de conversa:** as três últimas trocas (somente texto) acompanham a nova pergunta,
   permitindo perguntas de seguimento ("e de que cor ela é?").
+- **Conversas persistentes:** cada interação grava o `id` da conversa (`Assistant.session_id`) em
+  `registros/interacoes.jsonl`. `HistoryStore.conversations()` agrupa por conversa (registros antigos,
+  sem id, viram uma conversa por dia) e `delete_conversation()` reescreve o arquivo de forma atômica.
+  `gui/sidebar.py` só emite sinais; `MainWindow` carrega, apaga (com confirmação) e retoma a conversa
+  com `Assistant.load_session()`, que restaura as últimas trocas como contexto do modelo.
 - **Degradação graciosa:** se a voz online falhar, usa-se voz offline; se nenhuma voz funcionar,
   a resposta continua na tela com um aviso. Se o microfone faltar, o usuário pode digitar.
 
