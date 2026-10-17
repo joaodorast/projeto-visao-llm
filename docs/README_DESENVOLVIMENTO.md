@@ -65,13 +65,45 @@ Por prioridade:
 1. **Registrar o teste manual completo** com webcam e microfone reais, preenchendo as colunas
    vazias do roteiro em `REGISTRO_DE_TESTES.md` (evidência para a demonstração).
 2. **Validar o provedor OpenAI com a API real** (seção 5).
-3. **Integração contínua:** um workflow no GitHub Actions rodando `pytest` em cada PR, e então
+3. **Gravar a pergunta antes da voz**, para não perdê-la se o app cair durante a fala (veja
+   "Limitações conhecidas").
+4. **Integração contínua:** um workflow no GitHub Actions rodando `pytest` em cada PR, e então
    exigir esse check na proteção da `main`.
-4. **Teste de integração opcional com a API real**, desligado por padrão e ativado por variável
+5. **Teste de integração opcional com a API real**, desligado por padrão e ativado por variável
    de ambiente, para detectar mudanças de modelo (que já aconteceram — veja a seção 3).
-5. **Melhorias de produto** (ideias, fora do escopo atual): escolher o dispositivo de
-   microfone/câmera na interface, voz em streaming para responder mais rápido, histórico
-   navegável na janela.
+6. **Melhorias de produto** (ideias, fora do escopo atual): escolher o dispositivo de
+   microfone/câmera na interface, voz em streaming para responder mais rápido, renomear
+   conversas na barra lateral.
+
+## Limitações conhecidas
+
+### Pergunta pode não ser salva se o app cair durante a voz
+
+**Comportamento:** em `pipeline.Assistant._answer`, a interação só é gravada em
+`registros/interacoes.jsonl` no **fim** do fluxo, depois de exibir a resposta e de falá-la:
+
+```
+modelo responde → resposta aparece na tela → voz (gerar + tocar) → store.save()  ← só aqui
+```
+
+**Quando perde a pergunta:**
+
+| Situação | Resultado |
+|---|---|
+| Fechar o app durante a **reprodução** da voz | Salva. `AudioPlayer.stop()` interrompe o áudio e o fluxo chega ao `save` |
+| Fechar o app durante a **geração** da voz (chamada de rede, não interrompível) | **Perde.** `MainWindow.shutdown` espera as threads só 3 s e o processo encerra antes do `save` |
+| Travamento, encerramento forçado ou queda de energia antes do fim da fala | **Perde** |
+| Falha na voz (sem rede, sem créditos de TTS) | Salva; o aviso de voz é gravado junto |
+
+Só a pergunta em andamento é afetada; o que já estava gravado permanece.
+
+**Por que foi assim:** o registro inclui os tempos de cada etapa (inclusive a voz) e o aviso de
+falha de voz, que só existem no fim.
+
+**Correção planejada:** gravar a interação logo depois que a resposta é obtida (antes da voz) e,
+ao final, atualizar essa mesma linha com o tempo e o aviso de voz. Exige um identificador por
+interação e uma operação de atualização em `HistoryStore`, mais testes de que fechar durante a
+voz mantém a pergunta salva. Está listada em "O que falta".
 
 ## 5. Depende de trocar o Gemini pela OpenAI depois
 
