@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import QEvent, QObject, Qt, QSize
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QScrollArea,
+from PyQt5.QtCore import QEvent, QObject, QRectF, Qt, QSize
+from PyQt5.QtGui import QColor, QImage, QPainter, QPalette, QPixmap
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout, QLabel, QScrollArea,
                              QSizePolicy, QVBoxLayout, QWidget)
+
+from .style import ACCENT, BORDER, BORDER_STRONG, SURFACE
 
 
 class _RepassaRoda(QObject):
@@ -41,6 +43,40 @@ def scrollable(label: QLabel) -> QScrollArea:
     label.installEventFilter(_RepassaRoda(area))
     label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
     return area
+
+
+class Toggle(QCheckBox):
+    """Interruptor liga/desliga desenhado (mesma API do QCheckBox: isChecked, toggled...)."""
+
+    TRILHO_L, TRILHO_A, MARGEM_TEXTO = 38, 22, 12
+
+    def sizeHint(self) -> QSize:  # noqa: N802
+        fm = self.fontMetrics()
+        largura = self.TRILHO_L + self.MARGEM_TEXTO + fm.horizontalAdvance(self.text()) + 4
+        return QSize(largura, max(self.TRILHO_A + 6, fm.height() + 8))
+
+    def hitButton(self, pos) -> bool:  # noqa: N802 - a linha toda é clicável
+        return self.rect().contains(pos)
+
+    def paintEvent(self, event) -> None:  # noqa: N802
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        trilho = QRectF(0.5, (self.height() - self.TRILHO_A) / 2, self.TRILHO_L, self.TRILHO_A)
+        ligado = self.isChecked()
+        cor = QColor(ACCENT if ligado else BORDER_STRONG)
+        if not self.isEnabled():
+            cor = QColor(BORDER)
+        p.setPen(Qt.NoPen)
+        p.setBrush(cor)
+        p.drawRoundedRect(trilho, self.TRILHO_A / 2, self.TRILHO_A / 2)
+        lado = self.TRILHO_A - 6
+        x = trilho.right() - lado - 3 if ligado else trilho.left() + 3
+        p.setBrush(QColor(SURFACE))
+        p.drawEllipse(QRectF(x, trilho.top() + 3, lado, lado))
+        p.setPen(self.palette().color(QPalette.WindowText))
+        p.drawText(QRectF(self.TRILHO_L + self.MARGEM_TEXTO, 0, self.width(), self.height()),
+                   Qt.AlignVCenter | Qt.AlignLeft, self.text())
+        p.end()
 
 
 class ImageView(QLabel):

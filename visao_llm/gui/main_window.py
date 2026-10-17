@@ -20,8 +20,9 @@ from ..openai_service import Turn
 from ..pipeline import Assistant, FrameProvider
 from .diagnostics_page import DiagnosticsPage
 from .help_page import HelpPage
-from .icons import chat_icon, help_icon, pulse_icon
+from .icons import chat_icon, gear_icon, help_icon, pulse_icon
 from .navigation import NavRail
+from .settings_page import SettingsPage
 from .sidebar import ConversationSidebar
 from .widgets import Card, ImageView, StepIndicator, scrollable
 from .workers import CameraThread, InteractionWorker, SpeakWorker, frame_to_qimage
@@ -116,9 +117,8 @@ class MainWindow(QMainWindow):
         titulos = QVBoxLayout()
         titulos.setSpacing(2)
         titulos.addWidget(QLabel("Visão e Interpretação do Ambiente", objectName="appTitle"))
-        titulos.addWidget(QLabel(
-            f"Pergunte por voz — a IA olha pela câmera e responde falando  ·  "
-            f"modelo: {self.config.vision_model}", objectName="appSubtitle"))
+        self.subtitle = QLabel(objectName="appSubtitle")
+        titulos.addWidget(self.subtitle)
         topo.addLayout(titulos, 1)
         self.status_pill = QLabel(objectName="statusPill")
         topo.addWidget(self.status_pill, 0, Qt.AlignVCenter)
@@ -220,9 +220,7 @@ class MainWindow(QMainWindow):
         self._set_text(self.question_label, None, "Nenhuma pergunta ainda.")
         self._set_text(self.answer_label, None, "A resposta da IA aparecerá aqui.")
 
-        self.statusBar().showMessage(
-            f"Câmera: {self.config.camera_source}  ·  STT: {self.config.stt_model}  ·  "
-            f"TTS: {self.config.tts_model if self.config.tts_enabled else 'desativado'}")
+        self._atualizar_textos_config()
 
         QShortcut(QKeySequence("Ctrl+Space"), self, activated=self._on_mic_clicked)
         QShortcut(QKeySequence("Ctrl+N"), self, activated=self._on_clear)
@@ -231,6 +229,8 @@ class MainWindow(QMainWindow):
 
         self.diagnostics_page = DiagnosticsPage(self.config, camera_check=self._checar_camera)
         self._adicionar_pagina("diagnostico", "Diagnóstico", pulse_icon, self.diagnostics_page)
+        self.settings_page = SettingsPage(self.config, on_apply=self._aplicar_config)
+        self._adicionar_pagina("ajustes", "Ajustes", gear_icon, self.settings_page)
         self.help_page = HelpPage(self.config)
         self._adicionar_pagina("ajuda", "Ajuda", help_icon, self.help_page)
         for i in range(self.stack.count()):
@@ -349,6 +349,41 @@ class MainWindow(QMainWindow):
             # na primeira visita, o diagnóstico roda sozinho
             if self.stack.currentWidget() is self.diagnostics_page and not self.diagnostics_page.ja_executou:
                 self.diagnostics_page.run()
+
+    def _atualizar_textos_config(self) -> None:
+        c = self.config
+        self.subtitle.setText(f"Pergunte por voz — a IA olha pela câmera e responde falando  ·  "
+                              f"{c.provider.capitalize()} · {c.vision_model}")
+        self.statusBar().showMessage(
+            f"Câmera: {c.camera_source}  ·  STT: {c.stt_model}  ·  "
+            f"TTS: {c.tts_model if c.tts_enabled else 'desativado'}")
+
+    def _aplicar_config(self, novo: Config) -> bool:
+        """Aplica ajustes sem reiniciar. Devolve False se houver uma pergunta em andamento."""
+        if self.busy:
+            return False
+        trocou_camera = novo.camera_source != self.config.camera_source
+        self.config = novo
+        self._assistant = None  # recriado na próxima pergunta, com o novo provedor/modelos
+        self._history_store = HistoryStore(novo.history_dir)
+        self._atualizar_textos_config()
+        self.diagnostics_page.set_config(novo)
+        self.help_page.set_config(novo)
+        self._refresh_sidebar()
+        if trocou_camera:
+            self._reiniciar_camera()
+        return True
+
+    def _reiniciar_camera(self) -> None:
+        estava_ligada = self.camera_thread.isRunning()
+        self.camera_thread.stop()
+        self.camera_thread.wait(3000)
+        self.camera_thread = CameraThread(self.config.camera_source, parent=self)
+        self.camera_thread.frame_ready.connect(self._on_frame)
+        self.camera_thread.status_changed.connect(self._on_camera_status)
+        self.live_view.clear_image("Conectando à câmera…")
+        if estava_ligada:
+            self.camera_thread.start()
 
     def _checar_camera(self) -> str:
         """Diagnóstico da câmera usando a que já está aberta (abrir de novo falharia no Windows)."""
