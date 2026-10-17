@@ -156,6 +156,9 @@ Ao salvar:
 - o subtítulo da janela, o Diagnóstico e a Ajuda passam a mostrar a nova configuração;
 - a barra de conversas passa a avisar quando a gravação está desligada.
 
+Se o app foi aberto com opções de linha de comando (por exemplo, `--sem-voz` ou `--camera 1`),
+salvar a página grava os valores em uso, inclusive os dessas opções.
+
 Enquanto uma pergunta está em andamento, salvar é recusado com o aviso "Aguarde a pergunta atual
 terminar". Se o `.env` não puder ser gravado (por exemplo, sem permissão), os ajustes valem até
 fechar o app e a página explica o motivo.
