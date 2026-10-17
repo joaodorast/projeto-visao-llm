@@ -12,7 +12,7 @@ técnica, a [arquitetura](ARQUITETURA.md).
 | Requisitos não funcionais (RNF01–RNF03) | Implementados |
 | Provedor **Gemini** | Implementado e validado com a API real (visão, transcrição e voz) |
 | Provedor **OpenAI** | Implementado e coberto por testes, **ainda não validado com a API real** (veja a seção 5) |
-| Testes automatizados | 149 aprovados, sem rede, câmera ou microfone |
+| Testes automatizados | 169 aprovados, sem rede, câmera ou microfone |
 | Teste manual completo (janela + webcam + microfone) | Roteiro pronto em [REGISTRO_DE_TESTES.md](REGISTRO_DE_TESTES.md); falta registrar a execução |
 
 **O projeto está completo para o escopo proposto**: ele faz o fluxo inteiro (ouvir a pergunta,
@@ -64,7 +64,7 @@ Por prioridade:
 
 1. **Registrar o teste manual completo** com webcam e microfone reais, preenchendo as colunas
    vazias do roteiro em `REGISTRO_DE_TESTES.md` (evidência para a demonstração).
-2. **Validar o provedor OpenAI com a API real** (seção 5).
+2. **Validar o provedor OpenAI com a API real** (seção 5). A troca pode ser feita na página Ajustes.
 3. **Gravar a pergunta antes da voz**, para não perdê-la se o app cair durante a fala (veja
    "Limitações conhecidas").
 4. **Integração contínua:** um workflow no GitHub Actions rodando `pytest` em cada PR, e então
@@ -164,3 +164,4 @@ Combinados:
 | PR #10 | Tema cinza e branco com detalhes em laranja |
 | PR #11 | Barra de navegação, página de Ajuda e tela cheia (F11) |
 | PR #12 | Página de Diagnóstico dentro do app |
+| PR #13 | Página Ajustes (salva no `.env` e aplica sem reiniciar) |
