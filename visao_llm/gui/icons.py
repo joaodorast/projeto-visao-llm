@@ -75,13 +75,13 @@ def _lupa(p: QPainter) -> None:
 
 
 def trash_icon() -> QIcon:
-    """Lixeira: rosa claro normal, branca ao passar o mouse, cinza azulado se desativada."""
-    return _icone(_lixeira, "#fca5a5", "#ffffff", "#5b7396")
+    """Lixeira: rosa claro normal, branca ao passar o mouse, cinza se desativada."""
+    return _icone(_lixeira, "#fca5a5", "#ffffff", "#63636b")
 
 
 def plus_icon() -> QIcon:
-    return _icone(_mais, "#ffffff", "#ffffff", "#9db4d8")
+    return _icone(_mais, "#f97316", "#ea580c", "#a1a1aa")  # laranja sobre o botão branco
 
 
 def search_icon() -> QIcon:
-    return _icone(_lupa, "#7f9cc6", "#ffffff", "#5b7396")
+    return _icone(_lupa, "#a1a1aa", "#f4f4f5", "#63636b")

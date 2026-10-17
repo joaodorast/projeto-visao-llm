@@ -269,12 +269,11 @@ class MainWindow(QMainWindow):
         self.live_view.set_image(img)
 
     def _on_camera_status(self, ok: bool, msg: str) -> None:
-        if ok:
-            self.cam_badge.setText("● ao vivo")
-            self.cam_badge.setStyleSheet("color:#16a34a;")
-        else:
-            self.cam_badge.setText("● sem sinal")
-            self.cam_badge.setStyleSheet("color:#dc2626;")
+        self.cam_badge.setText("● ao vivo" if ok else "● sem sinal")
+        self.cam_badge.setProperty("estado", "ok" if ok else "falha")  # cor definida no style.py
+        self.cam_badge.style().unpolish(self.cam_badge)
+        self.cam_badge.style().polish(self.cam_badge)
+        if not ok:
             self.live_view.clear_image(f"📷  {msg}\n\nTentando reconectar…")
         self.statusBar().showMessage(msg, 8000)
 
