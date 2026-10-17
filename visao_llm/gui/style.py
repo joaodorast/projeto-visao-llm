@@ -209,6 +209,35 @@ QToolButton#navButton:checked {{ background: {GRAPHITE_2}; color: #ffffff; }}
     min-width: 110px;
 }}
 
+QPushButton#primary {{
+    background: {GRAPHITE}; color: #ffffff; border: none; border-radius: 10px;
+    padding: 10px 18px; font-weight: 700;
+}}
+QPushButton#primary:hover {{ background: {GRAPHITE_3}; }}
+QPushButton#primary:disabled {{ background: {BORDER_STRONG}; color: {MUTED}; }}
+
+#checkRow {{ background: {SURFACE}; border: 1px solid {BORDER}; border-radius: 12px; }}
+#checkName {{ font-size: 15px; font-weight: 700; color: {TEXT}; }}
+#checkDetail {{ font-size: 13px; color: {MUTED}; }}
+#checkHint {{
+    font-size: 13px; color: {TEXT_2}; background: {SURFACE_2};
+    border-left: 3px solid {ACCENT}; border-radius: 6px; padding: 8px 10px; margin-top: 4px;
+}}
+#checkBadge {{
+    border-radius: 8px; padding: 5px 0; font-size: 12px; font-weight: 800; letter-spacing: 0.5px;
+    background: {SURFACE_2}; color: {SUBTLE}; border: 1px solid {BORDER};
+}}
+#checkBadge[estado="rodando"] {{ background: {ACCENT_SOFT}; color: {ACCENT_TEXT}; border-color: #fed7aa; }}
+#checkBadge[estado="ok"]      {{ background: {GRAPHITE}; color: #ffffff; border-color: {GRAPHITE}; }}
+#checkBadge[estado="falha"]   {{ background: #fef2f2; color: #b91c1c; border-color: #fecaca; }}
+#diagSummary {{
+    font-size: 14px; color: {TEXT_2}; background: {SURFACE}; border: 1px solid {BORDER};
+    border-radius: 12px; padding: 12px 16px;
+}}
+#diagSummary[estado="rodando"] {{ background: {ACCENT_SOFT}; color: {ACCENT_TEXT}; border-color: #fed7aa; }}
+#diagSummary[estado="ok"]      {{ background: {SURFACE}; color: {TEXT}; border-left: 3px solid {ACCENT}; }}
+#diagSummary[estado="falha"]   {{ background: #fef2f2; color: #991b1b; border-color: #fecaca; }}
+
 QToolTip {{
     background: {GRAPHITE}; color: {ON_DARK}; border: 1px solid {GRAPHITE_3};
     border-radius: 6px; padding: 6px 8px;

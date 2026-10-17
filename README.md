@@ -57,8 +57,9 @@ python main.py --provedor openai  # troca de provedor sem editar o .env
 silêncio — a gravação para sozinha. Também é possível clicar em **■ Parar e enviar**, ou digitar a
 pergunta na caixa de texto. Durante a fala, o botão vira **■ Interromper fala** (`Esc`).
 
-**Navegação:** a barra de ícones à esquerda leva às páginas do app (Assistente e Ajuda), também por
-`Ctrl+1`, `Ctrl+2`… **F11** (ou o botão **Tela cheia**) alterna a tela cheia; `Esc` também sai dela.
+**Navegação:** a barra de ícones à esquerda leva às páginas do app (Assistente, Diagnóstico e Ajuda), também por
+`Ctrl+1`, `Ctrl+2`… A página **Diagnóstico** confere chave, câmera, microfone, alto-falante e conexão
+dentro do app, com dicas quando algo falha (roda sozinha na primeira visita). **F11** (ou o botão **Tela cheia**) alterna a tela cheia; `Esc` também sai dela.
 
 **Textos longos:** perguntas e respostas grandes ganham barra de rolagem na própria caixa, então dá
 para ler tudo até o fim. A janela abre num tamanho que cabe na sua tela (sem ficar atrás da barra de
@@ -84,7 +85,7 @@ A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever →
 pytest
 ```
 
-142 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
+149 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
 simulado). Incluem falha de conexão, timeout, erros HTTP da API, câmera indisponível, microfone
 ausente, falha de voz e responsividade da interface. Detalhes em
 [`docs/REGISTRO_DE_TESTES.md`](docs/REGISTRO_DE_TESTES.md).

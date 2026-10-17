@@ -18,8 +18,9 @@ from ..history import HistoryStore
 from ..models import InteractionResult, State, new_session_id
 from ..openai_service import Turn
 from ..pipeline import Assistant, FrameProvider
+from .diagnostics_page import DiagnosticsPage
 from .help_page import HelpPage
-from .icons import chat_icon, help_icon
+from .icons import chat_icon, help_icon, pulse_icon
 from .navigation import NavRail
 from .sidebar import ConversationSidebar
 from .widgets import Card, ImageView, StepIndicator, scrollable
@@ -228,6 +229,8 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence(Qt.Key_Escape), self, activated=self._on_escape)
         QShortcut(QKeySequence(Qt.Key_F11), self, activated=self._alternar_tela_cheia)
 
+        self.diagnostics_page = DiagnosticsPage(self.config, camera_check=self._checar_camera)
+        self._adicionar_pagina("diagnostico", "Diagnóstico", pulse_icon, self.diagnostics_page)
         self.help_page = HelpPage(self.config)
         self._adicionar_pagina("ajuda", "Ajuda", help_icon, self.help_page)
         for i in range(self.stack.count()):
@@ -343,6 +346,15 @@ class MainWindow(QMainWindow):
         if 0 <= indice < self.stack.count():
             self.stack.setCurrentIndex(indice)
             self.nav.set_current(indice)
+            # na primeira visita, o diagnóstico roda sozinho
+            if self.stack.currentWidget() is self.diagnostics_page and not self.diagnostics_page.ja_executou:
+                self.diagnostics_page.run()
+
+    def _checar_camera(self) -> str:
+        """Diagnóstico da câmera usando a que já está aberta (abrir de novo falharia no Windows)."""
+        frame = self.camera_thread.latest_frame()
+        altura, largura = frame.shape[:2]
+        return f"fonte={self.config.camera_source}, resolução={largura}x{altura} (em uso pelo app)"
 
     def _alternar_tela_cheia(self) -> None:
         """F11: entra e sai da tela cheia, voltando ao estado anterior (maximizada ou normal)."""
@@ -553,6 +565,7 @@ class MainWindow(QMainWindow):
         if self._worker is not None:
             self._worker.stop_listening()
         self.camera_thread.stop()
+        self.diagnostics_page.wait()
         for t in (self._worker, self._speak_worker, self.camera_thread):
             if t is not None and t.isRunning():
                 t.wait(3000)
