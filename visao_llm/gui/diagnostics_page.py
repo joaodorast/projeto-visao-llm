@@ -17,17 +17,17 @@ from ..config import Config
 from ..diagnostics import CheckResult, checks, run_check
 
 DICAS = {
-    "Chave da API": "Defina a chave do provedor no .env (GEMINI_API_KEY ou OPENAI_API_KEY) e "
-                    "reinicie o app.",
-    "Câmera": "Feche outros apps que usam a webcam (Teams, Zoom, navegador) ou troque a câmera "
-              "em CAMERA no .env.",
+    "Chave da API": "Cole a chave do provedor na página Ajustes (ou defina GEMINI_API_KEY / "
+                    "OPENAI_API_KEY no .env).",
+    "Câmera": "Feche outros apps que usam a webcam (Teams, Zoom, navegador) ou escolha outra "
+              "câmera na página Ajustes.",
     "Microfone": "Conecte um microfone e confira o dispositivo de entrada padrão do sistema. "
                  "Enquanto isso, dá para digitar as perguntas.",
     "Alto-falante": "Confira a saída de áudio padrão do sistema. A resposta continua aparecendo "
                     "na tela.",
 }
-DICA_CONEXAO = ("Verifique a internet, a chave e os nomes dos modelos no .env. Se a mensagem "
-                "falar em limite de uso, aguarde ou confira os créditos da conta.")
+DICA_CONEXAO = ("Verifique a internet e, na página Ajustes, a chave e os nomes dos modelos. Se a "
+                "mensagem falar em limite de uso, aguarde ou confira os créditos da conta.")
 
 
 class DiagnosticsWorker(QThread):
@@ -62,7 +62,8 @@ class CheckRow(QFrame):
         lay.addWidget(self.badge, 0, Qt.AlignTop)
         textos = QVBoxLayout()
         textos.setSpacing(3)
-        textos.addWidget(QLabel(nome, objectName="checkName"))
+        self.nome_label = QLabel(nome, objectName="checkName")
+        textos.addWidget(self.nome_label)
         self.detalhe = QLabel(objectName="checkDetail")
         self.detalhe.setWordWrap(True)
         self.detalhe.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -183,6 +184,15 @@ class DiagnosticsPage(QScrollArea):
         self.resumo.setProperty("estado", estado)
         self.resumo.style().unpolish(self.resumo)
         self.resumo.style().polish(self.resumo)
+
+    def set_config(self, config: Config) -> None:
+        """Novos ajustes: atualiza os nomes (ex.: "Conexão com OpenAI") e pede nova verificação."""
+        self.config = config
+        for linha, (nome, _) in zip(self.linhas, checks(config, self.camera_check)):
+            linha.nome = nome
+            linha.nome_label.setText(nome)
+            linha.set_estado("pendente", "Ajustes alterados: execute o diagnóstico de novo.")
+        self._set_resumo("neutro", "Os ajustes mudaram. Clique em <b>Executar diagnóstico</b>.")
 
     def wait(self, ms: int = 3000) -> None:
         if self.worker is not None and self.worker.isRunning():
