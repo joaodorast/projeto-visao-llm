@@ -145,6 +145,18 @@ padrão; se você sobrescrever `MODELO_*`, lembre de ajustar ao trocar.
 
 Logs completos ficam em `logs/app.log`.
 
-## 9. Documentação do desenvolvimento
+## 9. Limitações conhecidas
+
+- **Gravação do histórico acontece no fim do fluxo.** A conversa só é salva depois que a resposta
+  é exibida **e** a voz termina (ou falha). Fechar o app normalmente durante a *reprodução* da voz
+  ainda salva, pois a fala é interrompida e o fluxo conclui. Mas se o app for fechado durante a
+  *geração* da voz (uma chamada de rede que leva alguns segundos), ou travar ou for encerrado à
+  força antes do fim, **aquela pergunta não fica salva** (a resposta aparece na tela, mas não no
+  histórico). As perguntas anteriores não são afetadas.
+- Com `SALVAR_HISTORICO=false` nada é gravado e a barra lateral mostra um aviso.
+
+Detalhes e a correção planejada: [`docs/README_DESENVOLVIMENTO.md`](docs/README_DESENVOLVIMENTO.md#limitações-conhecidas).
+
+## 10. Documentação do desenvolvimento
 
 O que foi feito, o estado atual, o que falta e como contribuir: [`docs/README_DESENVOLVIMENTO.md`](docs/README_DESENVOLVIMENTO.md).
