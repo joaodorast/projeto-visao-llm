@@ -1,0 +1,15 @@
+# Núcleo
+openai>=1.40
+opencv-python>=4.8
+numpy>=1.24
+python-dotenv>=1.0
+PyQt5>=5.15
+
+# Áudio (microfone e alto-falante) — usa PortAudio
+sounddevice>=0.4.6
+
+# Voz offline de reserva (opcional: usada se a TTS da OpenAI falhar)
+pyttsx3>=2.90
+
+# Testes
+pytest>=7.4
