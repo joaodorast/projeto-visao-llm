@@ -1,0 +1,125 @@
+# Projeto 1 — Visão e Interpretação do Ambiente com LLM
+
+Aplicação em Python que **ouve uma pergunta pelo microfone, tira uma foto pela webcam no
+momento da pergunta, envia imagem + pergunta para um modelo multimodal da OpenAI e responde
+em voz alta**, mostrando na tela a imagem usada, a pergunta e a resposta.
+
+![Interface](docs/img/interface.png)
+
+> Exemplo — Usuário: *"O que está sobre a mesa?"* → Robô: *"Vejo um notebook e uma garrafa sobre a mesa."*
+
+---
+
+## 1. Requisitos
+
+| Item | Versão / observação |
+|---|---|
+| Python | 3.10 ou superior |
+| Webcam e microfone | qualquer dispositivo reconhecido pelo sistema |
+| Chave da OpenAI | conta com créditos — <https://platform.openai.com/api-keys> |
+| Linux apenas | `sudo apt install libportaudio2 espeak-ng` (áudio e voz offline) |
+
+## 2. Instalação
+
+```bash
+# 1. Entre na pasta do projeto
+cd projeto_visao_llm
+
+# 2. Crie e ative um ambiente virtual
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# Linux/macOS:
+source .venv/bin/activate
+
+# 3. Instale as dependências
+pip install -r requirements.txt
+
+# 4. Configure a chave (RNF01 — nunca no código)
+#    Windows: copy .env.example .env      Linux/macOS: cp .env.example .env
+#    Abra o .env e troque "coloque-sua-chave-aqui" pela sua chave.
+```
+
+## 3. Execução
+
+```bash
+python main.py                    # abre a interface
+python main.py --diagnostico      # testa chave, câmera, microfone, alto-falante e conexão
+python main.py --camera 1         # usa a segunda webcam
+python main.py --camera foto.jpg  # usa uma imagem/vídeo no lugar da webcam (demonstração)
+python main.py --sem-voz          # só texto, sem falar a resposta
+```
+
+**Como usar:** clique em **🎤 Clique para falar** (ou `Ctrl+Espaço`), faça a pergunta e fique em
+silêncio — a gravação para sozinha. Também é possível clicar em **■ Parar e enviar**, ou digitar a
+pergunta na caixa de texto. Durante a fala, o botão vira **■ Interromper fala** (`Esc`).
+
+A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever → Analisar → Falar** (RF05).
+
+## 4. Testes
+
+```bash
+pytest
+```
+
+70 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
+simulado). Incluem falha de conexão, timeout, erros HTTP da API, câmera indisponível, microfone
+ausente, falha de voz e responsividade da interface. Detalhes em
+[`docs/REGISTRO_DE_TESTES.md`](docs/REGISTRO_DE_TESTES.md).
+
+## 5. Estrutura
+
+```
+projeto_visao_llm/
+├── main.py                    # atalho: python main.py
+├── requirements.txt
+├── .env.example               # modelo de configuração (copie para .env)
+├── visao_llm/
+│   ├── __main__.py            # argumentos de linha de comando
+│   ├── config.py              # leitura do .env / variáveis de ambiente (RNF01)
+│   ├── errors.py              # erros com mensagens amigáveis (RNF02)
+│   ├── camera.py              # webcam via OpenCV, redimensiona e gera JPEG (RF01)
+│   ├── audio.py               # microfone com detecção de silêncio; reprodução (RF02/RF04)
+│   ├── openai_service.py      # STT, modelo de visão e TTS + tradução de erros (RF02–RF04)
+│   ├── speaker.py             # fala a resposta; cai para voz offline se a API falhar
+│   ├── pipeline.py            # orquestra o fluxo completo, independente da interface
+│   ├── history.py             # salva imagem + pergunta + resposta em registros/
+│   ├── factory.py             # monta os serviços reais a partir da configuração
+│   ├── diagnostics.py         # python main.py --diagnostico
+│   └── gui/                   # PyQt5: janela, threads de trabalho, estilo (RF05/RNF03)
+├── tests/                     # pytest
+└── docs/
+    ├── ARQUITETURA.md         # arquitetura, requisitos e fluxo de dados
+    └── REGISTRO_DE_TESTES.md  # testes automatizados + roteiro de demonstração
+```
+
+## 6. Configuração (`.env`)
+
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `OPENAI_API_KEY` | — | **obrigatória** |
+| `MODELO_VISAO` | `gpt-4.1-mini` | modelo multimodal (aceita imagem) |
+| `MODELO_STT` | `gpt-4o-mini-transcribe` | transcrição da fala (`whisper-1` também funciona) |
+| `MODELO_TTS` / `VOZ_TTS` | `gpt-4o-mini-tts` / `alloy` | síntese de voz |
+| `CAMERA` | `0` | índice da webcam ou caminho de vídeo/imagem |
+| `SILENCIO_SEG` | `1.3` | segundos de silêncio que encerram a gravação |
+| `GRAVACAO_MAX_SEG` | `15` | duração máxima da pergunta |
+| `TIMEOUT_REQUISICAO` / `TENTATIVAS_API` | `30` / `2` | rede |
+| `TTS_OFFLINE_FALLBACK` | `true` | usa voz local (pyttsx3) se a TTS online falhar |
+| `SALVAR_HISTORICO` | `true` | grava as interações em `registros/` |
+
+Os nomes de modelos mudam com o tempo: se o diagnóstico disser que um modelo não está
+disponível para sua conta, troque-o no `.env` por um modelo atual com suporte a imagem.
+
+## 7. Solução de problemas
+
+| Sintoma | O que fazer |
+|---|---|
+| "Câmera indisponível" | Feche outros apps que usam a webcam (Teams, Zoom, navegador); tente `--camera 1`. O app reconecta sozinho a cada 3 s. |
+| "Biblioteca de áudio indisponível" | Linux: `sudo apt install libportaudio2`. Enquanto isso, digite a pergunta. |
+| "Não ouvi nenhuma pergunta" | Fale mais perto do microfone; confira o microfone padrão do sistema. |
+| "Chave da API inválida" | Confira `OPENAI_API_KEY` no `.env` e reinicie. |
+| "Limite de uso da API" | Sem créditos ou muitas requisições — aguarde ou recarregue créditos. |
+| Resposta aparece mas não é falada | Aviso amarelo explica o motivo; a resposta em texto continua válida. |
+
+Logs completos ficam em `logs/app.log`.
