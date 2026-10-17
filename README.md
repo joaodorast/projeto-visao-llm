@@ -55,6 +55,11 @@ python main.py --provedor openai  # troca de provedor sem editar o .env
 silêncio — a gravação para sozinha. Também é possível clicar em **■ Parar e enviar**, ou digitar a
 pergunta na caixa de texto. Durante a fala, o botão vira **■ Interromper fala** (`Esc`).
 
+**Histórico:** o botão **🕘 Histórico** (ou `Ctrl+H`) abre todas as conversas já salvas, agrupadas
+por dia, com miniatura da foto, busca nas perguntas e respostas e os tempos de cada etapa. As
+conversas ficam em `registros/` (`interacoes.jsonl` + as fotos em `registros/AAAA-MM-DD/`);
+desative a gravação com `SALVAR_HISTORICO=false`.
+
 A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever → Analisar → Falar** (RF05).
 
 ## 4. Testes
@@ -63,7 +68,7 @@ A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever →
 pytest
 ```
 
-91 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
+106 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
 simulado). Incluem falha de conexão, timeout, erros HTTP da API, câmera indisponível, microfone
 ausente, falha de voz e responsividade da interface. Detalhes em
 [`docs/REGISTRO_DE_TESTES.md`](docs/REGISTRO_DE_TESTES.md).
@@ -85,7 +90,7 @@ projeto_visao_llm/
 │   ├── gemini_service.py      # STT e TTS do Gemini (a visão reaproveita o openai_service)
 │   ├── speaker.py             # fala a resposta; cai para voz offline se a API falhar
 │   ├── pipeline.py            # orquestra o fluxo completo, independente da interface
-│   ├── history.py             # salva imagem + pergunta + resposta em registros/
+│   ├── history.py             # salva e relê imagem + pergunta + resposta em registros/
 │   ├── factory.py             # monta os serviços reais a partir da configuração
 │   ├── diagnostics.py         # python main.py --diagnostico
 │   └── gui/                   # PyQt5: janela, threads de trabalho, estilo (RF05/RNF03)
