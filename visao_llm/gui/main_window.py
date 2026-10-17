@@ -14,8 +14,10 @@ from PyQt5.QtWidgets import (QHBoxLayout, QLabel, QLineEdit, QListWidget, QListW
 from ..audio import AudioPlayer
 from ..config import Config
 from ..errors import AppError
+from ..history import HistoryStore
 from ..models import InteractionResult, State
 from ..pipeline import Assistant, FrameProvider
+from .history_dialog import HistoryDialog
 from .widgets import Card, ImageView, StepIndicator
 from .workers import CameraThread, InteractionWorker, SpeakWorker, frame_to_qimage
 
@@ -46,6 +48,8 @@ class MainWindow(QMainWindow):
         self._origem = "voz"
         self._resultados: list[InteractionResult] = []
         self._ultima_resposta: str | None = None
+        self._history_store = HistoryStore(config.history_dir)
+        self._history_dialog: HistoryDialog | None = None
 
         self.setWindowTitle("Visão e Interpretação do Ambiente com LLM")
         self.resize(1280, 800)
@@ -76,6 +80,11 @@ class MainWindow(QMainWindow):
             f"Pergunte por voz — a IA olha pela câmera e responde falando  ·  "
             f"modelo: {self.config.vision_model}", objectName="appSubtitle"))
         topo.addLayout(titulos, 1)
+        self.history_button = QPushButton("🕘  Histórico", objectName="secondary")
+        self.history_button.setCursor(Qt.PointingHandCursor)
+        self.history_button.setToolTip("Ver todas as conversas salvas (Ctrl+H)")
+        self.history_button.clicked.connect(self._open_history)
+        topo.addWidget(self.history_button, 0, Qt.AlignVCenter)
         self.status_pill = QLabel(objectName="statusPill")
         topo.addWidget(self.status_pill, 0, Qt.AlignVCenter)
         principal.addLayout(topo)
@@ -180,6 +189,7 @@ class MainWindow(QMainWindow):
             f"TTS: {self.config.tts_model if self.config.tts_enabled else 'desativado'}")
 
         QShortcut(QKeySequence("Ctrl+Space"), self, activated=self._on_mic_clicked)
+        QShortcut(QKeySequence("Ctrl+H"), self, activated=self._open_history)
         QShortcut(QKeySequence(Qt.Key_Escape), self, activated=self._on_escape)
 
     @staticmethod
@@ -355,6 +365,15 @@ class MainWindow(QMainWindow):
         self._set_text(self.answer_label, r.resposta, "")
         self._ultima_resposta = r.resposta
         self.repeat_button.setEnabled(not self.busy)
+
+    def _open_history(self) -> None:
+        """Abre (ou traz para frente) a tela com todas as conversas salvas em disco."""
+        if self._history_dialog is None:
+            self._history_dialog = HistoryDialog(self._history_store, self)
+        self._history_dialog.reload()
+        self._history_dialog.show()
+        self._history_dialog.raise_()
+        self._history_dialog.activateWindow()
 
     def _on_clear(self) -> None:
         if self.busy:
