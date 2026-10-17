@@ -41,7 +41,7 @@ Webcam + Microfone → Captura e STT → API (modelo multimodal) → Resposta te
        │ FrameProvider │ Recorder       │ Transcriber    │ Vision        │ Voice / Store
 ┌──────▼─────┐ ┌──────▼──────┐ ┌──────▼───────┐ ┌──────▼───────┐ ┌─────▼──────────────┐
 │ camera.py  │ │ audio.py    │ │ SpeechToText │ │VisionAssistant│ │ speaker.py / history│
-│ (OpenCV)   │ │(sounddevice)│ │ (Gemini/OpenAI)│ │(Gemini/OpenAI)│ │(TTS online/pyttsx3) │
+│ (OpenCV)   │ │(sounddevice)│ │  (API LLM)   │ │  (API LLM)    │ │ (TTS API/pyttsx3)   │
 └────────────┘ └─────────────┘ └──────────────┘ └───────────────┘ └────────────────────┘
                      Infraestrutura: config.py · errors.py · logging_setup.py
 ```
