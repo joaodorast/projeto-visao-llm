@@ -11,7 +11,7 @@ O projeto tem duas camadas de teste:
 
 ## 1. Testes automatizados
 
-**Execução:** `pytest -v` · **Ambiente:** Python 3.13, Linux, Qt offscreen
+**Execução:** `pytest -v` · **Ambiente:** Python 3.14, Windows 11, Qt offscreen
 **Resultado:** ✅ **169 aprovados, 0 falhas** (17/10/2026)
 
 | Arquivo | Qtd. | Cobre |
@@ -38,7 +38,7 @@ O projeto tem duas camadas de teste:
 
 | ID | Requisito | Cenário | Resultado esperado | Status |
 |---|---|---|---|---|
-| CT01 | RNF01 | Iniciar sem `OPENAI_API_KEY` | `ConfigError` com instrução para criar o `.env` | ✅ |
+| CT01 | RNF01 | Iniciar sem a chave do provedor (`GEMINI_API_KEY` ou `OPENAI_API_KEY`) | `ConfigError` com instrução para criar o `.env` | ✅ |
 | CT02 | RNF01 | Chave e parâmetros no `.env` | Valores lidos; a chave não aparece no `repr` | ✅ |
 | — | RNF01 | Varredura do código-fonte por padrões `sk-…` | Nenhuma chave embutida | ✅ |
 | CT03 | RF01/RNF02 | Webcam inexistente (índice 97) | `CameraError` amigável, sem encerrar | ✅ |
@@ -69,7 +69,7 @@ O projeto tem duas camadas de teste:
 
 ## 2. Testes manuais (hardware real)
 
-**Pré-condição:** `python main.py --diagnostico` com todos os itens **OK**.
+**Pré-condição:** página **Diagnóstico** (ou `python main.py --diagnostico`) com todos os itens **OK**.
 Cada interação fica salva em `registros/` (foto + pergunta + resposta + tempos), servindo de evidência.
 
 ### 2.1 Demonstração — três cenas diferentes
@@ -92,7 +92,20 @@ Cada interação fica salva em `registros/` (foto + pergunta + resposta + tempos
 | F5 | Reconectar a webcam | Imagem volta sozinha em até ~3 s | | |
 | F6 | Iniciar com a webcam em uso por outro programa | Mensagem de câmera indisponível; app abre | | |
 | F7 | Remover/desativar o microfone e clicar em falar | Banner "Microfone: …"; pergunta digitada continua funcionando | | |
-| F8 | Colocar uma chave inválida no `.env` | Banner "Chave da API inválida…" | | |
+| F8 | Colocar uma chave inválida em Ajustes (ou no `.env`) e perguntar | Banner "Chave da API inválida…"; o Diagnóstico marca a conexão como FALHA | | |
 | F9 | Clicar em falar e ficar em silêncio | "Não ouvi nenhuma pergunta…" após ~6 s | | |
+
+### 2.3 Interface, conversas e ajustes
+
+| # | Procedimento | Resultado esperado | Resultado obtido | OK? |
+|---|---|---|---|---|
+| I1 | Fazer duas perguntas, clicar em **Nova conversa** e perguntar de novo | A conversa anterior continua na barra; a nova começa sem contexto | | |
+| I2 | Reabrir a conversa anterior e fazer uma pergunta de seguimento | A resposta usa o contexto; a pergunta entra na mesma conversa | | |
+| I3 | Apagar uma conversa (com confirmação) | Some da barra e de `registros/`, junto com as fotos | | |
+| I4 | Fazer uma pergunta que gere resposta longa | A caixa da resposta rola até o fim, inclusive com a roda do mouse | | |
+| I5 | Abrir a página **Diagnóstico** | A verificação roda sozinha; itens OK ou com dica | | |
+| I6 | Em **Ajustes**, desligar "Falar as respostas" e salvar | A próxima resposta aparece sem voz; o `.env` fica com `TTS_ATIVO=false` | | |
+| I7 | Em **Ajustes**, trocar a câmera e salvar | A imagem ao vivo passa para a nova câmera sem reiniciar | | |
+| I8 | Apertar **F11** e depois `Esc` | Entra e sai da tela cheia | | |
 
 **Executado por:** ______________________ **Data:** ___/___/______

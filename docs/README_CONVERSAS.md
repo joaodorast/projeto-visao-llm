@@ -14,17 +14,17 @@ antiga e continuar nela, buscar, atualizar a lista e apagar.
 |---|---|---|
 | **Salvar** | automático | Cada interação (pergunta, resposta, foto e tempos) é gravada na conversa atual |
 | **Listar** | barra lateral | Conversas agrupadas por dia (Hoje, Ontem, data), da mais recente para a mais antiga |
-| **Nova conversa** | botão **＋ Nova conversa** ou `Ctrl+N` | Limpa a tela e o contexto e começa um chat novo; as conversas anteriores continuam salvas |
+| **Nova conversa** | botão **Nova conversa** ou `Ctrl+N` | Limpa a tela e o contexto e começa um chat novo; as conversas anteriores continuam salvas |
 | **Abrir e continuar** | clicar na conversa | Volta com as perguntas, fotos e respostas; novas perguntas entram nela |
 | **Buscar** | caixa "Buscar conversas…" | Filtra pelo texto das perguntas **e** das respostas |
 | **Atualizar** | botão **↻** (topo da barra) | Relê o disco de verdade e mostra uma animação curta de carregamento |
-| **Apagar** | botão **🗑 Apagar conversa** ou botão direito na conversa | Pede confirmação e remove os registros e as fotos |
+| **Apagar** | botão **Apagar conversa** (lixeira) ou botão direito na conversa | Pede confirmação e remove os registros e as fotos |
 
 ## 2. Usando
 
 ### Nova conversa
 
-Clique em **＋ Nova conversa** ou use `Ctrl+N`. A tela é limpa e o modelo deixa de receber o
+Clique em **Nova conversa** ou use `Ctrl+N`. A tela é limpa e o modelo deixa de receber o
 contexto da conversa anterior. A nova conversa aparece na lista como **"Nova conversa"** e passa a
 ter o título da sua primeira pergunta assim que ela é respondida. As conversas anteriores não são
 alteradas.
@@ -65,7 +65,7 @@ lista da barra é atualizada normalmente).
 
 ### Apagar
 
-Use o botão **🗑 Apagar conversa** (com a conversa selecionada) ou o botão direito sobre ela. Uma
+Use o botão **Apagar conversa** (com a conversa selecionada) ou o botão direito sobre ela. Uma
 janela pede confirmação, com a quantidade de perguntas, e avisa que **não há como desfazer**.
 
 Ao confirmar:
@@ -104,7 +104,8 @@ Cada linha do `interacoes.jsonl` é um JSON:
 ```
 
 - `sessao` identifica a conversa: todas as linhas com o mesmo valor pertencem a ela.
-- Para **desligar a gravação**, use `SALVAR_HISTORICO=false` no `.env`. Nesse caso nenhuma conversa
+- Para **desligar a gravação**, desligue "Salvar as conversas automaticamente" em **Ajustes** ou
+  use `SALVAR_HISTORICO=false` no `.env`. Nesse caso nenhuma conversa
   é salva e a barra lateral mostra um aviso.
 - Como são arquivos simples, dá para copiar a pasta `registros/` para fazer backup.
 
@@ -113,7 +114,7 @@ Cada linha do `interacoes.jsonl` é um JSON:
 A interação só é gravada **no fim do fluxo**, depois da resposta e da voz. Se o app for fechado
 durante a *geração* da voz (chamada de rede), travar ou for encerrado à força antes disso, a
 pergunta em andamento não fica salva. Fechar durante a *reprodução* da voz salva normalmente.
-Detalhes e a correção planejada em [README_DESENVOLVIMENTO.md](README_DESENVOLVIMENTO.md#limitações-conhecidas).
+Detalhes e a correção planejada em [README_DESENVOLVIMENTO.md](README_DESENVOLVIMENTO.md#5-limitações-conhecidas).
 
 ## 5. Como foi implementado
 
