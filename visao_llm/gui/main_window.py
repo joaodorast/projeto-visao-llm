@@ -170,7 +170,9 @@ class MainWindow(QMainWindow):
         self.question_label.setWordWrap(True)
         self.question_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.question_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        textos.addWidget(Card("Pergunta (texto)", scrollable(self.question_label)), 2)
+        pergunta_card = Card("Pergunta (texto)", scrollable(self.question_label))
+        pergunta_card.setMaximumHeight(100)  # a resposta é que precisa de espaço
+        textos.addWidget(pergunta_card, 1)
 
         self.answer_label = QLabel(objectName="answerText")
         self.answer_label.setWordWrap(True)
@@ -182,9 +184,9 @@ class MainWindow(QMainWindow):
         self.repeat_button.clicked.connect(self._on_repeat)
         self.repeat_button.setEnabled(False)
         resp_card.acoes.addWidget(self.repeat_button)
-        textos.addWidget(resp_card, 5)
+        textos.addWidget(resp_card, 6)
         linha_topo.addLayout(textos, 3)  # mais largura para o texto, que agora rola
-        direita.addLayout(linha_topo, 5)
+        direita.addLayout(linha_topo, 7)
 
         self.history = QListWidget()
         self.history.itemClicked.connect(self._on_history_clicked)
