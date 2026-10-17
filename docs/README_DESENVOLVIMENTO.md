@@ -12,7 +12,7 @@ técnica, a [arquitetura](ARQUITETURA.md).
 | Requisitos não funcionais (RNF01–RNF03) | Implementados |
 | Provedor **Gemini** | Implementado e validado com a API real (visão, transcrição e voz) |
 | Provedor **OpenAI** | Implementado e coberto por testes, **ainda não validado com a API real** (veja a seção 5) |
-| Testes automatizados | 91 aprovados, sem rede, câmera ou microfone |
+| Testes automatizados | 119 aprovados, sem rede, câmera ou microfone |
 | Teste manual completo (janela + webcam + microfone) | Roteiro pronto em [REGISTRO_DE_TESTES.md](REGISTRO_DE_TESTES.md); falta registrar a execução |
 
 **O projeto está completo para o escopo proposto**: ele faz o fluxo inteiro (ouvir a pergunta,
@@ -124,3 +124,4 @@ Combinados:
 | Projeto base | Fluxo completo com OpenAI, interface, testes e documentação (36 commits, um por arquivo) |
 | PR #1 | Suporte ao Gemini, escolha de provedor, testes e documentação |
 | PR #2 | Este documento |
+| PR #4 | Conversas salvas automaticamente, barra lateral (nova, abrir, continuar, apagar, atualizar) |
