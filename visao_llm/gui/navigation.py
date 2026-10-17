@@ -18,7 +18,7 @@ class NavRail(QFrame):
     page_requested = pyqtSignal(int)
     fullscreen_requested = pyqtSignal()
 
-    LARGURA = 78
+    LARGURA = 88
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
@@ -29,7 +29,7 @@ class NavRail(QFrame):
         self._grupo.idClicked.connect(self.page_requested)
 
         self._lay = QVBoxLayout(self)
-        self._lay.setContentsMargins(8, 14, 8, 12)
+        self._lay.setContentsMargins(4, 14, 4, 12)
         self._lay.setSpacing(6)
         marca = QLabel("VI", objectName="appMark")
         marca.setAlignment(Qt.AlignCenter)
@@ -53,7 +53,7 @@ class NavRail(QFrame):
         botao.setIconSize(QSize(22, 22))
         botao.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         botao.setCursor(Qt.PointingHandCursor)
-        botao.setFixedWidth(self.LARGURA - 16)
+        botao.setFixedWidth(self.LARGURA - 8)
         return botao
 
     def add_page(self, texto: str, icone: Callable[[], QIcon], atalho: str = "") -> int:
