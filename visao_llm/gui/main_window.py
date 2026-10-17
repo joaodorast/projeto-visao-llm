@@ -7,7 +7,7 @@ from typing import Callable
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QKeySequence
-from PyQt5.QtWidgets import (QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
                              QMainWindow, QMessageBox, QProgressBar, QPushButton, QShortcut,
                              QSizePolicy, QVBoxLayout, QWidget)
 
@@ -19,7 +19,7 @@ from ..models import InteractionResult, State, new_session_id
 from ..openai_service import Turn
 from ..pipeline import Assistant, FrameProvider
 from .sidebar import ConversationSidebar
-from .widgets import Card, ImageView, StepIndicator
+from .widgets import Card, ImageView, StepIndicator, scrollable
 from .workers import CameraThread, InteractionWorker, SpeakWorker, frame_to_qimage
 
 log = logging.getLogger(__name__)
@@ -53,8 +53,7 @@ class MainWindow(QMainWindow):
         self._history_store = HistoryStore(config.history_dir)
 
         self.setWindowTitle("Visão e Interpretação do Ambiente com LLM")
-        self.resize(1440, 820)
-        self.setMinimumSize(1180, 640)
+        self._ajustar_tamanho()
         self._build_ui()
         self._set_state("OCIOSO")
         self._refresh_sidebar()
@@ -64,6 +63,15 @@ class MainWindow(QMainWindow):
         self.camera_thread.status_changed.connect(self._on_camera_status)
         if start_camera:
             self.camera_thread.start()
+
+    def _ajustar_tamanho(self) -> None:
+        """Tamanho inicial que cabe na tela (a janela não passa da área útil, sem a barra de tarefas)."""
+        tela = QApplication.primaryScreen()
+        util = tela.availableGeometry() if tela is not None else None
+        largura = min(1440, util.width()) if util else 1440
+        altura = min(820, util.height()) if util else 820
+        self.resize(largura, altura)
+        self.setMinimumSize(min(1180, largura), min(640, altura))
 
     # ================================================================ UI
     def _build_ui(self) -> None:
@@ -146,7 +154,7 @@ class MainWindow(QMainWindow):
         controles.add(QLabel("Atalhos: Ctrl+Espaço fala / para  ·  Esc interrompe",
                              objectName="hint"))
         esquerda.addWidget(controles, 0)
-        corpo.addLayout(esquerda, 5)
+        corpo.addLayout(esquerda, 4)
 
         # --- coluna direita: imagem capturada, pergunta, resposta, histórico
         direita = QVBoxLayout()
@@ -154,7 +162,7 @@ class MainWindow(QMainWindow):
         linha_topo = QHBoxLayout()
         linha_topo.setSpacing(12)
         self.captured_view = ImageView("A foto usada na pergunta aparece aqui")
-        linha_topo.addWidget(Card("Imagem capturada", self.captured_view), 1)
+        linha_topo.addWidget(Card("Imagem capturada", self.captured_view), 2)
 
         textos = QVBoxLayout()
         textos.setSpacing(12)
@@ -162,22 +170,23 @@ class MainWindow(QMainWindow):
         self.question_label.setWordWrap(True)
         self.question_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.question_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        textos.addWidget(Card("Pergunta (texto)", self.question_label), 2)
+        pergunta_card = Card("Pergunta (texto)", scrollable(self.question_label))
+        pergunta_card.setMaximumHeight(100)  # a resposta é que precisa de espaço
+        textos.addWidget(pergunta_card, 1)
 
         self.answer_label = QLabel(objectName="answerText")
         self.answer_label.setWordWrap(True)
         self.answer_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.answer_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        self.answer_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        resp_card = Card("Resposta da IA", self.answer_label)
+        resp_card = Card("Resposta da IA", scrollable(self.answer_label))
         self.repeat_button = QPushButton("🔊 Repetir", objectName="secondary")
         self.repeat_button.setCursor(Qt.PointingHandCursor)
         self.repeat_button.clicked.connect(self._on_repeat)
         self.repeat_button.setEnabled(False)
         resp_card.acoes.addWidget(self.repeat_button)
-        textos.addWidget(resp_card, 3)
-        linha_topo.addLayout(textos, 1)
-        direita.addLayout(linha_topo, 3)
+        textos.addWidget(resp_card, 6)
+        linha_topo.addLayout(textos, 3)  # mais largura para o texto, que agora rola
+        direita.addLayout(linha_topo, 7)
 
         self.history = QListWidget()
         self.history.itemClicked.connect(self._on_history_clicked)

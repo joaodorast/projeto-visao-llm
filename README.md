@@ -55,6 +55,10 @@ python main.py --provedor openai  # troca de provedor sem editar o .env
 silêncio — a gravação para sozinha. Também é possível clicar em **■ Parar e enviar**, ou digitar a
 pergunta na caixa de texto. Durante a fala, o botão vira **■ Interromper fala** (`Esc`).
 
+**Textos longos:** perguntas e respostas grandes ganham barra de rolagem na própria caixa, então dá
+para ler tudo até o fim. A janela abre num tamanho que cabe na sua tela (sem ficar atrás da barra de
+tarefas do Windows).
+
 **Conversas (barra lateral):** cada conversa é salva automaticamente, e a barra à esquerda lista
 todas, agrupadas por dia e com busca.
 
@@ -75,7 +79,7 @@ A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever →
 pytest
 ```
 
-119 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
+127 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
 simulado). Incluem falha de conexão, timeout, erros HTTP da API, câmera indisponível, microfone
 ausente, falha de voz e responsividade da interface. Detalhes em
 [`docs/REGISTRO_DE_TESTES.md`](docs/REGISTRO_DE_TESTES.md).

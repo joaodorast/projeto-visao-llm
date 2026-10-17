@@ -130,6 +130,12 @@ QPushButton#danger {{
 QPushButton#danger:hover {{ background: #7f1d1d; color: #ffffff; }}
 QPushButton#danger:disabled {{ color: #64748b; border-color: #2a4a7a; }}
 
+#textScroll, #textScroll > QWidget > QWidget {{ background: transparent; }}
+#textScroll QScrollBar:vertical {{ background: transparent; width: 10px; margin: 2px; }}
+#textScroll QScrollBar::handle:vertical {{ background: #cbd5e1; border-radius: 4px; min-height: 28px; }}
+#textScroll QScrollBar::handle:vertical:hover {{ background: #94a3b8; }}
+#textScroll QScrollBar::add-line:vertical, #textScroll QScrollBar::sub-line:vertical {{ height: 0; }}
+
 QStatusBar {{ background: #e2e8f0; color: #475569; font-size: 12px; }}
 #camBadge {{ font-size: 12px; font-weight: 600; }}
 #hint {{ color: #64748b; font-size: 12px; }}
