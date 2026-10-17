@@ -6,6 +6,8 @@ em voz alta**, mostrando na tela a imagem usada, a pergunta e a resposta.
 
 ![Interface](docs/img/interface.png)
 
+Visual em cinza e branco, com poucos detalhes em laranja (paleta centralizada em `visao_llm/gui/style.py`).
+
 > Exemplo — Usuário: *"O que está sobre a mesa?"* → Robô: *"Vejo um notebook e uma garrafa sobre a mesa."*
 
 ---
@@ -79,7 +81,7 @@ A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever →
 pytest
 ```
 
-132 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
+135 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
 simulado). Incluem falha de conexão, timeout, erros HTTP da API, câmera indisponível, microfone
 ausente, falha de voz e responsividade da interface. Detalhes em
 [`docs/REGISTRO_DE_TESTES.md`](docs/REGISTRO_DE_TESTES.md).
