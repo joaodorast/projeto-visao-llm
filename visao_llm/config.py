@@ -1,7 +1,8 @@
 """Carregamento de configuração a partir de variáveis de ambiente / arquivo .env.
 
 RNF01: a chave da API NUNCA fica no código-fonte. Ela é lida da variável de
-ambiente OPENAI_API_KEY (que pode vir de um arquivo .env ignorado pelo git).
+ambiente OPENAI_API_KEY ou GEMINI_API_KEY, conforme o provedor escolhido em
+PROVEDOR (podem vir de um arquivo .env ignorado pelo git).
 """
 
 from __future__ import annotations
@@ -15,6 +16,23 @@ from dotenv import load_dotenv
 from .errors import ConfigError
 
 RAIZ_PROJETO = Path(__file__).resolve().parent.parent
+
+
+PROVEDORES = ("openai", "gemini")
+
+#: Endpoint compatível com o SDK da OpenAI, usado para visão e transcrição no Gemini.
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+#: Valores padrão de cada provedor; o .env pode sobrescrever qualquer um deles.
+PADROES_PROVEDOR = {
+    "openai": dict(vision_model="gpt-4.1-mini", stt_model="gpt-4o-mini-transcribe",
+                   tts_model="gpt-4o-mini-tts", tts_voice="alloy", base_url=None),
+    "gemini": dict(vision_model="gemini-3.8-flash", stt_model="gemini-3.8-flash",
+                   tts_model="gemini-3.8-flash-tts", tts_voice="Kore",
+                   base_url=GEMINI_BASE_URL),
+}
+
+CHAVE_POR_PROVEDOR = {"openai": "OPENAI_API_KEY", "gemini": "GEMINI_API_KEY"}
 
 
 def _bool(valor: str | None, padrao: bool) -> bool:
@@ -52,6 +70,7 @@ def parse_camera_source(valor: str | int | None) -> int | str:
 
 @dataclass(frozen=True)
 class Config:
+    provider: str = "openai"
     api_key: str | None = field(default=None, repr=False)
     base_url: str | None = None
 
@@ -87,9 +106,10 @@ class Config:
 
     def require_api_key(self) -> str:
         if not self.api_key or not self.api_key.strip():
+            nome = self.provider.capitalize() if self.provider != "openai" else "OpenAI"
             raise ConfigError(
-                "Chave da OpenAI não configurada. Crie um arquivo .env (copie de "
-                ".env.example) e defina OPENAI_API_KEY."
+                f"Chave da {nome} não configurada. Crie um arquivo .env (copie de "
+                f".env.example) e defina {CHAVE_POR_PROVEDOR.get(self.provider, 'OPENAI_API_KEY')}."
             )
         return self.api_key.strip()
 
@@ -107,13 +127,19 @@ def load_config(env_file: str | os.PathLike | None = None) -> Config:
 
     env = os.environ.get
     padrao = Config()
+    provider = (env("PROVEDOR") or padrao.provider).strip().lower()
+    if provider not in PROVEDORES:
+        raise ConfigError(
+            f"Valor inválido para PROVEDOR: {provider!r} (use: {', '.join(PROVEDORES)}).")
+    modelos = PADROES_PROVEDOR[provider]
     return Config(
-        api_key=env("OPENAI_API_KEY"),
-        base_url=env("OPENAI_BASE_URL") or None,
-        vision_model=env("MODELO_VISAO") or padrao.vision_model,
-        stt_model=env("MODELO_STT") or padrao.stt_model,
-        tts_model=env("MODELO_TTS") or padrao.tts_model,
-        tts_voice=env("VOZ_TTS") or padrao.tts_voice,
+        provider=provider,
+        api_key=env(CHAVE_POR_PROVEDOR[provider]),
+        base_url=env("OPENAI_BASE_URL") or modelos["base_url"],
+        vision_model=env("MODELO_VISAO") or modelos["vision_model"],
+        stt_model=env("MODELO_STT") or modelos["stt_model"],
+        tts_model=env("MODELO_TTS") or modelos["tts_model"],
+        tts_voice=env("VOZ_TTS") or modelos["tts_voice"],
         language=env("IDIOMA") or padrao.language,
         request_timeout=_float("TIMEOUT_REQUISICAO", env("TIMEOUT_REQUISICAO"), padrao.request_timeout),
         max_retries=_int("TENTATIVAS_API", env("TENTATIVAS_API"), padrao.max_retries),
