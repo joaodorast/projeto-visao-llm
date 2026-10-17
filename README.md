@@ -79,7 +79,7 @@ A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever →
 pytest
 ```
 
-127 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
+132 testes automatizados, **sem usar rede, câmera ou microfone reais** (dublês e transporte HTTP
 simulado). Incluem falha de conexão, timeout, erros HTTP da API, câmera indisponível, microfone
 ausente, falha de voz e responsividade da interface. Detalhes em
 [`docs/REGISTRO_DE_TESTES.md`](docs/REGISTRO_DE_TESTES.md).

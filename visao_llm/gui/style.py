@@ -124,11 +124,15 @@ QPushButton#refreshChats:hover {{ background: #1e4a8a; color: #ffffff; }}
 #conversationList::item:hover {{ background: #17345d; }}
 #conversationList::item:selected {{ background: #1e4a8a; color: #ffffff; }}
 QPushButton#danger {{
-    background: transparent; color: #fca5a5; border: 1px solid #7f1d1d;
-    border-radius: 8px; padding: 8px 12px; font-weight: 600;
+    background: rgba(239, 68, 68, 0.10); color: #fca5a5;
+    border: 1px solid rgba(248, 113, 113, 0.35); border-radius: 10px;
+    padding: 10px 14px; font-weight: 600; letter-spacing: 0.2px;
 }}
-QPushButton#danger:hover {{ background: #7f1d1d; color: #ffffff; }}
-QPushButton#danger:disabled {{ color: #64748b; border-color: #2a4a7a; }}
+QPushButton#danger:hover {{ background: #dc2626; border-color: #dc2626; color: #ffffff; }}
+QPushButton#danger:pressed {{ background: #b91c1c; border-color: #b91c1c; }}
+QPushButton#danger:disabled {{
+    background: transparent; color: #5b7396; border: 1px solid #22416b;
+}}
 
 #textScroll, #textScroll > QWidget > QWidget {{ background: transparent; }}
 #textScroll QScrollBar:vertical {{ background: transparent; width: 10px; margin: 2px; }}
