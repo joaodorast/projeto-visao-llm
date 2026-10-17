@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QKeySequence
 from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
                              QMainWindow, QMessageBox, QProgressBar, QPushButton, QShortcut,
-                             QSizePolicy, QVBoxLayout, QWidget)
+                             QSizePolicy, QStackedWidget, QVBoxLayout, QWidget)
 
 from ..audio import AudioPlayer
 from ..config import Config
@@ -18,6 +18,9 @@ from ..history import HistoryStore
 from ..models import InteractionResult, State, new_session_id
 from ..openai_service import Turn
 from ..pipeline import Assistant, FrameProvider
+from .help_page import HelpPage
+from .icons import chat_icon, help_icon
+from .navigation import NavRail
 from .sidebar import ConversationSidebar
 from .widgets import Card, ImageView, StepIndicator, scrollable
 from .workers import CameraThread, InteractionWorker, SpeakWorker, frame_to_qimage
@@ -80,14 +83,29 @@ class MainWindow(QMainWindow):
         raiz = QHBoxLayout(root)
         raiz.setContentsMargins(0, 0, 0, 0)
         raiz.setSpacing(0)
+
+        # --- navegação: trilho de ícones + páginas empilhadas
+        self.nav = NavRail()
+        self.nav.page_requested.connect(self._ir_para)
+        self.nav.fullscreen_requested.connect(self._alternar_tela_cheia)
+        raiz.addWidget(self.nav)
+        self.stack = QStackedWidget()
+        raiz.addWidget(self.stack, 1)
+        self.paginas: dict[str, int] = {}
+
+        assistente = QWidget()
+        pagina = QHBoxLayout(assistente)  # a página do assistente: conversas + conteúdo
+        pagina.setContentsMargins(0, 0, 0, 0)
+        pagina.setSpacing(0)
+        self._adicionar_pagina("assistente", "Assistente", chat_icon, assistente)
         self.sidebar = ConversationSidebar()
         self.sidebar.new_requested.connect(self._on_clear)
         self.sidebar.conversation_selected.connect(self._abrir_conversa)
         self.sidebar.delete_requested.connect(self._on_delete_conversation)
         self.sidebar.refresh_requested.connect(self._atualizar_do_disco)
-        raiz.addWidget(self.sidebar)
+        pagina.addWidget(self.sidebar)
         conteudo = QWidget()
-        raiz.addWidget(conteudo, 1)
+        pagina.addWidget(conteudo, 1)
         principal = QVBoxLayout(conteudo)
         principal.setContentsMargins(22, 18, 22, 14)
         principal.setSpacing(14)
@@ -208,6 +226,13 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+Space"), self, activated=self._on_mic_clicked)
         QShortcut(QKeySequence("Ctrl+N"), self, activated=self._on_clear)
         QShortcut(QKeySequence(Qt.Key_Escape), self, activated=self._on_escape)
+        QShortcut(QKeySequence(Qt.Key_F11), self, activated=self._alternar_tela_cheia)
+
+        self.help_page = HelpPage(self.config)
+        self._adicionar_pagina("ajuda", "Ajuda", help_icon, self.help_page)
+        for i in range(self.stack.count()):
+            QShortcut(QKeySequence(f"Ctrl+{i + 1}"), self,
+                      activated=lambda i=i: self._ir_para(i))
 
     @staticmethod
     def _set_text(label: QLabel, texto: str | None, vazio: str) -> None:
@@ -304,6 +329,32 @@ class MainWindow(QMainWindow):
             self._worker.stop_listening()
         elif self._estado == "FALANDO":
             self.player.stop()
+        elif self.isFullScreen():
+            self._alternar_tela_cheia()
+
+    # ========================================================= navegação
+    def _adicionar_pagina(self, chave: str, titulo: str, icone, widget: QWidget) -> int:
+        indice = self.stack.addWidget(widget)
+        self.nav.add_page(titulo, icone, f"Ctrl+{indice + 1}")
+        self.paginas[chave] = indice
+        return indice
+
+    def _ir_para(self, indice: int) -> None:
+        if 0 <= indice < self.stack.count():
+            self.stack.setCurrentIndex(indice)
+            self.nav.set_current(indice)
+
+    def _alternar_tela_cheia(self) -> None:
+        """F11: entra e sai da tela cheia, voltando ao estado anterior (maximizada ou normal)."""
+        if self.isFullScreen():
+            if getattr(self, "_estava_maximizada", False):
+                self.showMaximized()
+            else:
+                self.showNormal()
+        else:
+            self._estava_maximizada = self.isMaximized()
+            self.showFullScreen()
+        self.nav.set_fullscreen(self.isFullScreen())
 
     def _on_send_text(self) -> None:
         texto = self.text_input.text().strip()

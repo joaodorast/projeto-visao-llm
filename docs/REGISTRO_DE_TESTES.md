@@ -2,7 +2,7 @@
 
 O projeto tem duas camadas de teste:
 
-1. **Testes automatizados (pytest)** — 135 casos que rodam sem câmera, microfone ou internet,
+1. **Testes automatizados (pytest)** — 142 casos que rodam sem câmera, microfone ou internet,
    usando dublês e um transporte HTTP simulado no próprio SDK (OpenAI e Gemini). Reproduzíveis com `pytest`.
 2. **Testes manuais com hardware real** — roteiro para a demonstração (três cenas diferentes) e
    para as falhas físicas (desconectar internet e webcam). Preencher durante a apresentação.
@@ -12,7 +12,7 @@ O projeto tem duas camadas de teste:
 ## 1. Testes automatizados
 
 **Execução:** `pytest -v` · **Ambiente:** Python 3.13, Linux, Qt offscreen
-**Resultado:** ✅ **135 aprovados, 0 falhas** (17/10/2026)
+**Resultado:** ✅ **142 aprovados, 0 falhas** (17/10/2026)
 
 | Arquivo | Qtd. | Cobre |
 |---|---|---|
@@ -27,6 +27,7 @@ O projeto tem duas camadas de teste:
 | `test_scroll.py` | 8 | rolagem de textos longos e tamanho da janela na tela |
 | `test_icons.py` | 5 | ícones vetoriais e seus estados nos botões da barra lateral |
 | `test_theme.py` | 3 | tema: destaque laranja, sem cores fixas fora do `style.py`, indicador da câmera |
+| `test_navigation.py` | 7 | navegação entre páginas, tela cheia (F11/Esc) e página de Ajuda |
 | `test_pipeline.py` | 18 | fluxo completo e falhas em cada etapa |
 | `test_gui.py` | 6 | RF05, RNF02, RNF03 na interface |
 

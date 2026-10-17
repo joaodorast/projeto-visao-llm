@@ -182,6 +182,33 @@ QStatusBar {{ background: {SURFACE}; color: {MUTED}; font-size: 12px; border-top
 #camBadge[estado="falha"] {{ color: #dc2626; }}
 #hint {{ color: {MUTED}; font-size: 12px; }}
 
+#navRail {{ background: #141417; border-right: 1px solid #26262b; }}
+#appMark {{
+    background: {ACCENT}; color: #ffffff; border-radius: 10px;
+    font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
+}}
+QToolButton#navButton {{
+    background: transparent; color: #8b8b94; border: none; border-radius: 10px;
+    padding: 8px 2px 6px 2px; font-size: 11px; font-weight: 600;
+}}
+QToolButton#navButton:hover {{ background: {GRAPHITE_2}; color: {ON_DARK}; }}
+QToolButton#navButton:checked {{ background: {GRAPHITE_2}; color: #ffffff; }}
+
+#page, #pageBody {{ background: {BG}; }}
+#pageTitle {{ font-size: 24px; font-weight: 700; color: {TEXT}; }}
+#pageSubtitle {{ font-size: 14px; color: {MUTED}; }}
+#helpText {{ font-size: 14px; color: {TEXT_2}; }}
+#stepNumber {{
+    background: {ACCENT_SOFT}; color: {ACCENT_TEXT}; border: 1px solid #fed7aa;
+    border-radius: 14px; font-weight: 700;
+}}
+#kbd {{
+    background: {SURFACE_2}; color: {TEXT}; border: 1px solid {BORDER_STRONG};
+    border-bottom: 2px solid {BORDER_STRONG}; border-radius: 6px;
+    padding: 4px 10px; font-family: "Consolas", "SF Mono", monospace; font-size: 12px;
+    min-width: 110px;
+}}
+
 QToolTip {{
     background: {GRAPHITE}; color: {ON_DARK}; border: 1px solid {GRAPHITE_3};
     border-radius: 6px; padding: 6px 8px;
