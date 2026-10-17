@@ -1,4 +1,4 @@
-"""Fala a resposta: TTS da OpenAI + alto-falante, com fallback de voz offline."""
+"""Fala a resposta: TTS online (Gemini ou OpenAI) + alto-falante, com fallback de voz offline."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class OfflineVoice:
-    """Voz local via pyttsx3 (opcional). Usada se a TTS da OpenAI falhar."""
+    """Voz local via pyttsx3 (opcional). Usada se a TTS online falhar."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
