@@ -1,5 +1,8 @@
 """Integração com a API da OpenAI: STT (RF02), visão multimodal (RF03) e TTS (RF04).
 
+O SDK também é usado com o Gemini (endpoint compatível): VisionAssistant e api_errors
+são compartilhados com gemini_service.
+
 Todas as exceções do SDK são convertidas em NetworkError / APIError com
 mensagens claras, para a interface tratá-las sem encerrar (RNF02).
 """
@@ -56,10 +59,10 @@ def api_errors(operacao: str) -> Iterator[None]:
         raise NetworkError(f"Tempo esgotado ao {operacao}. Verifique sua conexão e tente de novo.",
                            detalhe=str(exc)) from exc
     except openai.APIConnectionError as exc:
-        raise NetworkError(f"Sem conexão com a OpenAI ao {operacao}. Verifique a internet.",
+        raise NetworkError(f"Sem conexão com a API ao {operacao}. Verifique a internet.",
                            detalhe=str(exc)) from exc
     except openai.AuthenticationError as exc:
-        raise APIError("Chave da API inválida ou revogada. Confira OPENAI_API_KEY no .env.",
+        raise APIError("Chave da API inválida ou revogada. Confira a chave do provedor no .env.",
                        detalhe=str(exc)) from exc
     except openai.PermissionDeniedError as exc:
         raise APIError("Sua conta não tem permissão para este recurso/modelo.",
@@ -73,7 +76,7 @@ def api_errors(operacao: str) -> Iterator[None]:
     except openai.BadRequestError as exc:
         raise APIError(f"A API recusou a requisição ao {operacao}.", detalhe=str(exc)) from exc
     except openai.InternalServerError as exc:
-        raise APIError("A OpenAI está instável no momento (erro no servidor). Tente novamente.",
+        raise APIError("A API está instável no momento (erro no servidor). Tente novamente.",
                        detalhe=str(exc)) from exc
     except openai.APIStatusError as exc:
         raise APIError(f"Erro da API ao {operacao} (HTTP {exc.status_code}).",
@@ -111,11 +114,13 @@ class Turn:
 
 class VisionAssistant:
     def __init__(self, client: OpenAI, model: str, max_tokens: int = 1000,
-                 system_prompt: str = SYSTEM_PROMPT):
+                 system_prompt: str = SYSTEM_PROMPT, reasoning_effort: str | None = None):
         self.client = client
         self.model = model
         self.max_tokens = max_tokens
         self.system_prompt = system_prompt
+        #: Nível de raciocínio do modelo ("low"…); None mantém o padrão do provedor.
+        self.reasoning_effort = reasoning_effort
 
     def build_messages(self, jpeg: bytes, pergunta: str,
                        historico: Sequence[Turn] = ()) -> list[dict]:
@@ -137,11 +142,13 @@ class VisionAssistant:
 
     def ask(self, jpeg: bytes, pergunta: str, historico: Sequence[Turn] = ()) -> str:
         mensagens = self.build_messages(jpeg, pergunta, historico)
+        extras = {"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}
         with api_errors("consultar o modelo de visão"):
             resposta = self.client.chat.completions.create(
                 model=self.model,
                 messages=mensagens,
                 max_completion_tokens=self.max_tokens,
+                **extras,
             )
         try:
             texto = (resposta.choices[0].message.content or "").strip()
