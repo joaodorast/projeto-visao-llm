@@ -2,7 +2,7 @@
 
 O projeto tem duas camadas de teste:
 
-1. **Testes automatizados (pytest)** — 149 casos que rodam sem câmera, microfone ou internet,
+1. **Testes automatizados (pytest)** — 169 casos que rodam sem câmera, microfone ou internet,
    usando dublês e um transporte HTTP simulado no próprio SDK (OpenAI e Gemini). Reproduzíveis com `pytest`.
 2. **Testes manuais com hardware real** — roteiro para a demonstração (três cenas diferentes) e
    para as falhas físicas (desconectar internet e webcam). Preencher durante a apresentação.
@@ -12,7 +12,7 @@ O projeto tem duas camadas de teste:
 ## 1. Testes automatizados
 
 **Execução:** `pytest -v` · **Ambiente:** Python 3.13, Linux, Qt offscreen
-**Resultado:** ✅ **149 aprovados, 0 falhas** (17/10/2026)
+**Resultado:** ✅ **169 aprovados, 0 falhas** (17/10/2026)
 
 | Arquivo | Qtd. | Cobre |
 |---|---|---|
@@ -29,6 +29,8 @@ O projeto tem duas camadas de teste:
 | `test_theme.py` | 3 | tema: destaque laranja, sem cores fixas fora do `style.py`, indicador da câmera |
 | `test_navigation.py` | 7 | navegação entre páginas, tela cheia (F11/Esc) e página de Ajuda |
 | `test_diagnostics.py` | 7 | coleta do diagnóstico, saída do terminal e página de Diagnóstico |
+| `test_env_file.py` | 6 | atualização do `.env` preservando comentários, aspas e gravação atômica |
+| `test_settings.py` | 14 | página Ajustes: provedor, chave, salvar, aplicar sem reiniciar e interruptores |
 | `test_pipeline.py` | 18 | fluxo completo e falhas em cada etapa |
 | `test_gui.py` | 6 | RF05, RNF02, RNF03 na interface |
 
