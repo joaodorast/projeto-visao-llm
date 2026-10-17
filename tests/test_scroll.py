@@ -97,3 +97,46 @@ def test_janela_inicial_cabe_na_area_util_da_tela(app, tmp_path):
         assert w.minimumWidth() <= util.width() and w.minimumHeight() <= util.height()
     finally:
         w.close()
+
+
+def roda_do_mouse(app, alvo, passos=-240):
+    from PyQt5.QtCore import QPoint, QPointF
+    from PyQt5.QtGui import QWheelEvent
+    centro = alvo.rect().center()
+    evento = QWheelEvent(QPointF(centro), QPointF(alvo.mapToGlobal(centro)), QPoint(0, 0),
+                         QPoint(0, passos), Qt.NoButton, Qt.NoModifier, Qt.NoScrollPhase, False)
+    app.sendEvent(alvo, evento)
+    app.processEvents()
+
+
+@pytest.mark.parametrize("selecionavel", [False, True])
+def test_roda_do_mouse_sobre_o_texto_rola(app, selecionavel):
+    """A roda precisa rolar com o ponteiro sobre o próprio texto (não só sobre a barra)."""
+    label = QLabel(LONGO)
+    label.setWordWrap(True)
+    if selecionavel:
+        label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+    area = scrollable(label)
+    area.resize(260, 120)
+    area.show()
+    app.processEvents()
+    assert area.verticalScrollBar().value() == 0
+    roda_do_mouse(app, label)
+    assert area.verticalScrollBar().value() > 0
+    roda_do_mouse(app, label, passos=+240)  # e volta para cima
+    assert area.verticalScrollBar().value() == 0
+    area.close()
+
+
+def test_roda_do_mouse_na_resposta_da_janela(app, tmp_path):
+    w = janela(tmp_path)
+    try:
+        w.resize(1180, 640)
+        w.show()
+        w._set_text(w.answer_label, LONGO, "")
+        app.processEvents()
+        barra = area_do(w.answer_label).verticalScrollBar()
+        roda_do_mouse(app, w.answer_label)
+        assert barra.value() > 0
+    finally:
+        w.close()
