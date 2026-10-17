@@ -1,6 +1,6 @@
 """Diagnóstico rápido do ambiente: `python -m visao_llm --diagnostico`.
 
-Verifica chave da API, câmera, microfone, alto-falante e conexão com a OpenAI,
+Verifica chave da API, câmera, microfone, alto-falante e conexão com o provedor (OpenAI ou Gemini),
 sem encerrar com exceção caso algo falhe.
 """
 
@@ -27,7 +27,7 @@ def run_diagnostics(config: Config) -> bool:
         except Exception as exc:  # pragma: no cover - defensivo
             resultados.append((nome, False, repr(exc)))
 
-    checar("Chave da API (RNF01)", lambda: (config.require_api_key(), "lida do ambiente/.env")[1])
+    checar(f"Chave da API {config.provider} (RNF01)", lambda: (config.require_api_key(), "lida do ambiente/.env")[1])
 
     def camera():
         with Camera(config.camera_source) as cam:
@@ -46,14 +46,14 @@ def run_diagnostics(config: Config) -> bool:
     def api():
         client = build_client(config.with_overrides(max_retries=0, request_timeout=15.0))
         with api_errors("listar modelos"):
-            ids = {m.id for m in client.models.list()}
+            ids = {m.id.removeprefix("models/") for m in client.models.list()}
         faltando = [m for m in (config.vision_model, config.stt_model, config.tts_model)
                     if m not in ids]
         if faltando:
             return f"conectado; modelos não listados p/ sua conta: {', '.join(faltando)}"
         return "conectado; modelos configurados disponíveis"
 
-    checar("Conexão com a OpenAI (RF03)", api)
+    checar(f"Conexão com {config.provider.capitalize()} (RF03)", api)
 
     print("\nDiagnóstico — Visão e Interpretação do Ambiente com LLM\n")
     for nome, ok, detalhe in resultados:
