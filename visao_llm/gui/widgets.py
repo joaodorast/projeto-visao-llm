@@ -4,8 +4,25 @@ from __future__ import annotations
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout,
-                             QWidget)
+from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QScrollArea, QSizePolicy,
+                             QVBoxLayout, QWidget)
+
+
+def scrollable(label: QLabel) -> QScrollArea:
+    """Coloca um QLabel com quebra de linha em uma área rolável.
+
+    Textos longos (como respostas da IA) deixam de ser cortados: a barra de rolagem vertical
+    aparece só quando o texto não cabe, e a horizontal nunca (o texto quebra a linha).
+    """
+    area = QScrollArea()
+    area.setObjectName("textScroll")
+    area.setWidgetResizable(True)
+    area.setFrameShape(QFrame.NoFrame)
+    area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    area.setWidget(label)
+    label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+    return area
 
 
 class ImageView(QLabel):
@@ -16,6 +33,7 @@ class ImageView(QLabel):
         self._pix: QPixmap | None = None
         self._placeholder = placeholder
         self.setObjectName("imageView")
+        self.setWordWrap(True)  # o aviso de "sem imagem" quebra a linha em colunas estreitas
         self.setAlignment(Qt.AlignCenter)
         self.setMinimumSize(160, 120)
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
