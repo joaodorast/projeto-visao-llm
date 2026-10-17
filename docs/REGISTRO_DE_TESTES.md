@@ -2,7 +2,7 @@
 
 O projeto tem duas camadas de teste:
 
-1. **Testes automatizados (pytest)** — 91 casos que rodam sem câmera, microfone ou internet,
+1. **Testes automatizados (pytest)** — 119 casos que rodam sem câmera, microfone ou internet,
    usando dublês e um transporte HTTP simulado no próprio SDK (OpenAI e Gemini). Reproduzíveis com `pytest`.
 2. **Testes manuais com hardware real** — roteiro para a demonstração (três cenas diferentes) e
    para as falhas físicas (desconectar internet e webcam). Preencher durante a apresentação.
@@ -12,7 +12,7 @@ O projeto tem duas camadas de teste:
 ## 1. Testes automatizados
 
 **Execução:** `pytest -v` · **Ambiente:** Python 3.13, Linux, Qt offscreen
-**Resultado:** ✅ **91 aprovados, 0 falhas** (17/10/2026)
+**Resultado:** ✅ **119 aprovados, 0 falhas** (17/10/2026)
 
 | Arquivo | Qtd. | Cobre |
 |---|---|---|
@@ -21,6 +21,9 @@ O projeto tem duas camadas de teste:
 | `test_audio.py` | 11 | RF02, RNF02 (microfone/alto-falante) |
 | `test_openai_service.py` | 16 | RF02–RF04, RNF02 (conexão e API) |
 | `test_gemini_service.py` | 17 | RF02–RF04 com Gemini, RNF02, escolha de provedor |
+| `test_history.py` | 6 | leitura do histórico salvo e tolerância a arquivos ruins |
+| `test_conversations.py` | 11 | conversas por sessão, registros antigos, exclusão, contexto do assistente |
+| `test_sidebar.py` | 11 | barra lateral: abrir, continuar, nova, apagar, atualizar, buscar |
 | `test_pipeline.py` | 18 | fluxo completo e falhas em cada etapa |
 | `test_gui.py` | 6 | RF05, RNF02, RNF03 na interface |
 

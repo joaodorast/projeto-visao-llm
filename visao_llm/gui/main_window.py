@@ -8,14 +8,17 @@ from typing import Callable
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QKeySequence
 from PyQt5.QtWidgets import (QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-                             QMainWindow, QProgressBar, QPushButton, QShortcut, QSizePolicy,
-                             QVBoxLayout, QWidget)
+                             QMainWindow, QMessageBox, QProgressBar, QPushButton, QShortcut,
+                             QSizePolicy, QVBoxLayout, QWidget)
 
 from ..audio import AudioPlayer
 from ..config import Config
 from ..errors import AppError
-from ..models import InteractionResult, State
+from ..history import HistoryStore
+from ..models import InteractionResult, State, new_session_id
+from ..openai_service import Turn
 from ..pipeline import Assistant, FrameProvider
+from .sidebar import ConversationSidebar
 from .widgets import Card, ImageView, StepIndicator
 from .workers import CameraThread, InteractionWorker, SpeakWorker, frame_to_qimage
 
@@ -46,12 +49,15 @@ class MainWindow(QMainWindow):
         self._origem = "voz"
         self._resultados: list[InteractionResult] = []
         self._ultima_resposta: str | None = None
+        self._conversa_id = new_session_id()
+        self._history_store = HistoryStore(config.history_dir)
 
         self.setWindowTitle("Visão e Interpretação do Ambiente com LLM")
-        self.resize(1280, 800)
-        self.setMinimumSize(980, 640)
+        self.resize(1440, 820)
+        self.setMinimumSize(1180, 640)
         self._build_ui()
         self._set_state("OCIOSO")
+        self._refresh_sidebar()
 
         self.camera_thread = CameraThread(config.camera_source, parent=self)
         self.camera_thread.frame_ready.connect(self._on_frame)
@@ -63,7 +69,18 @@ class MainWindow(QMainWindow):
     def _build_ui(self) -> None:
         root = QWidget(objectName="root")
         self.setCentralWidget(root)
-        principal = QVBoxLayout(root)
+        raiz = QHBoxLayout(root)
+        raiz.setContentsMargins(0, 0, 0, 0)
+        raiz.setSpacing(0)
+        self.sidebar = ConversationSidebar()
+        self.sidebar.new_requested.connect(self._on_clear)
+        self.sidebar.conversation_selected.connect(self._abrir_conversa)
+        self.sidebar.delete_requested.connect(self._on_delete_conversation)
+        self.sidebar.refresh_requested.connect(self._atualizar_do_disco)
+        raiz.addWidget(self.sidebar)
+        conteudo = QWidget()
+        raiz.addWidget(conteudo, 1)
+        principal = QVBoxLayout(conteudo)
         principal.setContentsMargins(22, 18, 22, 14)
         principal.setSpacing(14)
 
@@ -164,7 +181,7 @@ class MainWindow(QMainWindow):
 
         self.history = QListWidget()
         self.history.itemClicked.connect(self._on_history_clicked)
-        hist_card = Card("Histórico desta sessão", self.history)
+        hist_card = Card("Perguntas desta conversa", self.history)
         self.clear_button = QPushButton("Nova conversa", objectName="secondary")
         self.clear_button.setCursor(Qt.PointingHandCursor)
         self.clear_button.clicked.connect(self._on_clear)
@@ -180,6 +197,7 @@ class MainWindow(QMainWindow):
             f"TTS: {self.config.tts_model if self.config.tts_enabled else 'desativado'}")
 
         QShortcut(QKeySequence("Ctrl+Space"), self, activated=self._on_mic_clicked)
+        QShortcut(QKeySequence("Ctrl+N"), self, activated=self._on_clear)
         QShortcut(QKeySequence(Qt.Key_Escape), self, activated=self._on_escape)
 
     @staticmethod
@@ -291,6 +309,7 @@ class MainWindow(QMainWindow):
         assistant = self._get_assistant()
         if assistant is None:
             return
+        self._sync_assistant(assistant)
         self._origem = "texto" if pergunta_texto is not None else "voz"
         w = InteractionWorker(assistant, pergunta_texto, speak=self.config.tts_enabled,
                               parent=self)
@@ -311,12 +330,16 @@ class MainWindow(QMainWindow):
         self._ultima_resposta = resultado.resposta
         self._set_text(self.answer_label, resultado.resposta, "")
         self._resultados.append(resultado)
+        self.history.insertItem(0, self._item_para(resultado, len(self._resultados) - 1))
+
+    @staticmethod
+    def _item_para(resultado: InteractionResult, indice: int) -> QListWidgetItem:
         hora = resultado.timestamp.strftime("%H:%M:%S")
         icone = "🎤" if resultado.origem == "voz" else "⌨"
         item = QListWidgetItem(f"{hora}  {icone}  {resultado.pergunta}")
-        item.setData(Qt.UserRole, len(self._resultados) - 1)
+        item.setData(Qt.UserRole, indice)
         item.setToolTip(resultado.resposta)
-        self.history.insertItem(0, item)
+        return item
 
     def _on_failed(self, titulo: str, mensagem: str) -> None:
         self._show_error(titulo, mensagem)
@@ -332,6 +355,7 @@ class MainWindow(QMainWindow):
             # mantém o estado visível, mas libera o botão
             self.mic_button.setEnabled(True)
             self.mic_button.setText(TEXTO_MIC)
+        self._refresh_sidebar()  # a interação acabou de ser gravada em disco
 
     def _on_repeat(self) -> None:
         assistant = self._assistant
@@ -348,19 +372,107 @@ class MainWindow(QMainWindow):
         w.start()
 
     def _on_history_clicked(self, item: QListWidgetItem) -> None:
-        r = self._resultados[item.data(Qt.UserRole)]
+        self._mostrar(self._resultados[item.data(Qt.UserRole)])
+
+    def _mostrar(self, r: InteractionResult) -> None:
+        """Exibe uma interação (a foto vem do frame em memória ou do JPEG salvo)."""
         if r.frame is not None:
             self.captured_view.set_image(frame_to_qimage(r.frame))
+        elif r.image_jpeg:
+            img = QImage.fromData(r.image_jpeg)
+            if not img.isNull():
+                self.captured_view.set_image(img)
+            else:
+                self.captured_view.clear_image("Imagem ilegível")
+        else:
+            self.captured_view.clear_image("Imagem não encontrada no disco")
         self._set_text(self.question_label, r.pergunta, "")
         self._set_text(self.answer_label, r.resposta, "")
         self._ultima_resposta = r.resposta
         self.repeat_button.setEnabled(not self.busy)
 
-    def _on_clear(self) -> None:
+    # ====================================================== conversas salvas
+    def _refresh_sidebar(self) -> None:
+        self.sidebar.refresh(self._history_store.conversations(), self._conversa_id,
+                             gravando=self.config.save_history)
+
+    def _atualizar_do_disco(self) -> None:
+        """Botão de atualizar: relê o histórico salvo e traz o que for novo.
+
+        Se a conversa aberta tiver mais perguntas gravadas do que as exibidas (por exemplo,
+        feitas por outra janela do app), ela é recarregada para incluí-las.
+        """
+        conversas = self._history_store.conversations()
+        atual = next((c for c in conversas if c.id == self._conversa_id), None)
+        if atual is not None and not self.busy and len(atual.entradas) > len(self._resultados):
+            self._resultados = [self._resultado_de(e) for e in atual.entradas]
+            self.history.clear()
+            for i, r in enumerate(self._resultados):
+                self.history.insertItem(0, self._item_para(r, i))
+            self._mostrar(self._resultados[-1])
+        self.sidebar.refresh(conversas, self._conversa_id, gravando=self.config.save_history)
+
+    def _sync_assistant(self, assistant: Assistant) -> None:
+        """Garante que o contexto enviado ao modelo é o da conversa que está na tela."""
+        if assistant.session_id != self._conversa_id:
+            turnos = [Turn(r.pergunta, r.resposta) for r in self._resultados]
+            assistant.load_session(self._conversa_id, turnos)
+
+    @staticmethod
+    def _resultado_de(e) -> InteractionResult:
+        try:
+            jpeg = e.imagem.read_bytes() if e.imagem is not None else b""
+        except OSError:
+            jpeg = b""
+        return InteractionResult(pergunta=e.pergunta, resposta=e.resposta, image_jpeg=jpeg,
+                                 origem=e.origem, tempos=dict(e.tempos), timestamp=e.data_hora,
+                                 sessao=e.sessao)
+
+    def _abrir_conversa(self, session_id: str) -> None:
+        """Carrega uma conversa salva; novas perguntas continuam nela."""
+        if session_id == self._conversa_id:
+            return
+        conversa = next((c for c in self._history_store.conversations()
+                         if c.id == session_id), None)
+        if self.busy or conversa is None:
+            self._refresh_sidebar()  # desfaz a seleção feita na lista
+            return
+        self._hide_banners()
+        self._conversa_id = session_id
+        self._resultados = [self._resultado_de(e) for e in conversa.entradas]
+        self.history.clear()
+        for i, r in enumerate(self._resultados):
+            self.history.insertItem(0, self._item_para(r, i))
+        self._mostrar(self._resultados[-1])
+        self._set_state("OCIOSO")
+        self._refresh_sidebar()
+
+    def _confirmar_apagar(self, interacoes: int) -> bool:
+        resposta = QMessageBox.question(
+            self, "Apagar conversa",
+            f"Apagar esta conversa ({interacoes} "
+            f"{'pergunta' if interacoes == 1 else 'perguntas'}) e as fotos dela?\n\n"
+            "Isso não pode ser desfeito.", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        return resposta == QMessageBox.Yes
+
+    def _on_delete_conversation(self, session_id: str) -> None:
         if self.busy:
             return
-        if self._assistant is not None:
-            self._assistant.clear_context()
+        conversa = next((c for c in self._history_store.conversations()
+                         if c.id == session_id), None)
+        if conversa is None or not self._confirmar_apagar(len(conversa.entradas)):
+            return
+        self._history_store.delete_conversation(session_id)
+        if session_id == self._conversa_id:
+            self._on_clear()
+        else:
+            self._refresh_sidebar()
+
+    def _on_clear(self) -> None:
+        """Nova conversa: limpa a tela e o contexto; as conversas anteriores continuam salvas."""
+        if self.busy:
+            return
+        self._conversa_id = new_session_id()
         self._resultados.clear()
         self.history.clear()
         self._ultima_resposta = None
@@ -369,6 +481,7 @@ class MainWindow(QMainWindow):
         self._set_text(self.answer_label, None, "A resposta da IA aparecerá aqui.")
         self._hide_banners()
         self._set_state("OCIOSO")
+        self._refresh_sidebar()
 
     # ============================================================ fechar
     def closeEvent(self, event) -> None:  # noqa: N802

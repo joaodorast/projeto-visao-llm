@@ -20,7 +20,7 @@ import numpy as np
 
 from .camera import encode_jpeg
 from .errors import AppError, CameraError, SpeakerError
-from .models import InteractionResult, State
+from .models import InteractionResult, State, new_session_id
 from .openai_service import Turn
 
 log = logging.getLogger(__name__)
@@ -79,6 +79,7 @@ class Assistant:
         self.store = store
         self.image_max_side = image_max_side
         self.historico: deque[Turn] = deque(maxlen=max(0, context_turns))
+        self.session_id = new_session_id()
 
     # --------------------------------------------------------- API pública
     def ask_by_voice(self, stop_event: threading.Event | None = None,
@@ -93,6 +94,19 @@ class Assistant:
 
     def clear_context(self) -> None:
         self.historico.clear()
+
+    def new_session(self) -> str:
+        """Começa uma conversa nova: zera o contexto e gera outro identificador."""
+        self.clear_context()
+        self.session_id = new_session_id()
+        return self.session_id
+
+    def load_session(self, session_id: str, turnos: Sequence[Turn] = ()) -> None:
+        """Retoma uma conversa existente: as últimas trocas voltam como contexto do modelo."""
+        self.historico.clear()
+        limite = self.historico.maxlen or 0
+        self.historico.extend(list(turnos)[-limite:] if limite else ())
+        self.session_id = session_id
 
     # ------------------------------------------------------------- fluxos
     def _voice_flow(self, stop_event, cb: Callbacks, speak: bool) -> InteractionResult:
@@ -153,7 +167,8 @@ class Assistant:
 
         self.historico.append(Turn(pergunta, resposta))
         resultado = InteractionResult(pergunta=pergunta, resposta=resposta, image_jpeg=jpeg,
-                                      frame=frame, origem=origem, tempos=tempos)
+                                      frame=frame, origem=origem, tempos=tempos,
+                                      sessao=self.session_id)
         if cb.on_answer:
             cb.on_answer(resultado)
 

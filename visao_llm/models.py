@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from uuid import uuid4
 
 import numpy as np
 
@@ -22,6 +23,11 @@ class State(str, Enum):
     ERRO = "Erro"
 
 
+def new_session_id() -> str:
+    """Identificador de uma conversa (ordenável por data de criação)."""
+    return f"{datetime.now():%Y%m%d-%H%M%S}-{uuid4().hex[:6]}"
+
+
 @dataclass
 class InteractionResult:
     pergunta: str
@@ -32,3 +38,4 @@ class InteractionResult:
     tempos: dict[str, float] = field(default_factory=dict)
     aviso_voz: str | None = None
     timestamp: datetime = field(default_factory=datetime.now)
+    sessao: str = ""  # conversa a que a interação pertence

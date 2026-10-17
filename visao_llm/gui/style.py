@@ -100,6 +100,36 @@ QListWidget {{
 QListWidget::item {{ padding: 6px 4px; border-bottom: 1px solid #f1f5f9; }}
 QListWidget::item:selected {{ background: #eff4ff; color: #1e3a8a; }}
 
+#sidebar {{ background: #0f2747; }}
+#sidebarTitle {{ color: #ffffff; font-size: 16px; font-weight: 700; }}
+#sidebar QLabel#hint {{ color: #94a3b8; }}
+#sidebar QLineEdit {{
+    background: #17345d; border: 1px solid #2a4a7a; color: #e2e8f0; padding: 8px 10px;
+}}
+#sidebar QLineEdit:focus {{ border-color: #60a5fa; }}
+QPushButton#newChat {{
+    background: {ACCENT}; color: white; border: none; border-radius: 10px;
+    padding: 11px 14px; font-weight: 700; text-align: left;
+}}
+QPushButton#newChat:hover {{ background: #1d4ed8; }}
+QPushButton#refreshChats {{
+    background: #17345d; color: #cbd5e1; border: 1px solid #2a4a7a; border-radius: 8px;
+    min-width: 30px; max-width: 30px; min-height: 26px; max-height: 26px; font-size: 16px;
+}}
+QPushButton#refreshChats:hover {{ background: #1e4a8a; color: #ffffff; }}
+#conversationList {{ background: transparent; color: #cbd5e1; outline: none; }}
+#conversationList::item {{
+    padding: 9px 10px; border-radius: 8px; border-bottom: none; margin: 1px 0;
+}}
+#conversationList::item:hover {{ background: #17345d; }}
+#conversationList::item:selected {{ background: #1e4a8a; color: #ffffff; }}
+QPushButton#danger {{
+    background: transparent; color: #fca5a5; border: 1px solid #7f1d1d;
+    border-radius: 8px; padding: 8px 12px; font-weight: 600;
+}}
+QPushButton#danger:hover {{ background: #7f1d1d; color: #ffffff; }}
+QPushButton#danger:disabled {{ color: #64748b; border-color: #2a4a7a; }}
+
 QStatusBar {{ background: #e2e8f0; color: #475569; font-size: 12px; }}
 #camBadge {{ font-size: 12px; font-weight: 600; }}
 #hint {{ color: #64748b; font-size: 12px; }}
