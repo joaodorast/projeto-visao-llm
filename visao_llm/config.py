@@ -103,6 +103,7 @@ class Config:
     save_history: bool = True
     history_dir: Path = RAIZ_PROJETO / "registros"
     log_dir: Path = RAIZ_PROJETO / "logs"
+    env_path: Path = RAIZ_PROJETO / ".env"  # arquivo que a página Ajustes atualiza
 
     def require_api_key(self) -> str:
         if not self.api_key or not self.api_key.strip():
@@ -153,4 +154,5 @@ def load_config(env_file: str | os.PathLike | None = None) -> Config:
         save_history=_bool(env("SALVAR_HISTORICO"), padrao.save_history),
         history_dir=Path(env("PASTA_HISTORICO") or padrao.history_dir),
         log_dir=Path(env("PASTA_LOGS") or padrao.log_dir),
+        env_path=Path(env_file) if env_file is not None else padrao.env_path,
     )
