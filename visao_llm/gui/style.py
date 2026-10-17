@@ -100,6 +100,10 @@ QListWidget {{
 QListWidget::item {{ padding: 6px 4px; border-bottom: 1px solid #f1f5f9; }}
 QListWidget::item:selected {{ background: #eff4ff; color: #1e3a8a; }}
 
+#historyList {{ background: #ffffff; border-radius: 8px; }}
+#historyList::item {{ padding: 8px 6px; border-bottom: 1px solid #f1f5f9; }}
+#historyDialog {{ background: #eef2f8; }}
+
 QStatusBar {{ background: #e2e8f0; color: #475569; font-size: 12px; }}
 #camBadge {{ font-size: 12px; font-weight: 600; }}
 #hint {{ color: #64748b; font-size: 12px; }}
