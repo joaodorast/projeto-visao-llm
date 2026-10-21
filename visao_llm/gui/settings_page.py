@@ -122,10 +122,12 @@ class SettingsPage(QScrollArea):
 
         # --- voz e gravação
         extras = Card("Voz e conversas")
+        self.continuous = Toggle("Conversa contínua: um clique e o app fica ouvindo, "
+                                 "sem clicar a cada pergunta")
         self.tts_enabled = Toggle("Falar as respostas em voz alta")
         self.offline_voice = Toggle("Usar a voz do computador se a voz online falhar")
         self.save_history = Toggle("Salvar as conversas automaticamente")
-        for caixa in (self.tts_enabled, self.offline_voice, self.save_history):
+        for caixa in (self.continuous, self.tts_enabled, self.offline_voice, self.save_history):
             caixa.setCursor(Qt.PointingHandCursor)
             extras.add(caixa)
         lay.addWidget(extras)
@@ -180,6 +182,7 @@ class SettingsPage(QScrollArea):
         self.camera.setText(str(c.camera_source))
         self.silence.setValue(c.silence_seconds)
         self.max_record.setValue(c.max_record_seconds)
+        self.continuous.setChecked(c.continuous_conversation)
         self.tts_enabled.setChecked(c.tts_enabled)
         self.offline_voice.setChecked(c.tts_offline_fallback)
         self.save_history.setChecked(c.save_history)
@@ -233,6 +236,7 @@ class SettingsPage(QScrollArea):
             camera_source=parse_camera_source(self.camera.text()),
             silence_seconds=round(self.silence.value(), 1),
             max_record_seconds=round(self.max_record.value(), 1),
+            continuous_conversation=self.continuous.isChecked(),
             tts_enabled=self.tts_enabled.isChecked(),
             tts_offline_fallback=self.offline_voice.isChecked(),
             save_history=self.save_history.isChecked(),
@@ -250,6 +254,7 @@ class SettingsPage(QScrollArea):
             "CAMERA": str(novo.camera_source),
             "SILENCIO_SEG": f"{novo.silence_seconds:g}",
             "GRAVACAO_MAX_SEG": f"{novo.max_record_seconds:g}",
+            "CONVERSA_CONTINUA": _bool(novo.continuous_conversation),
             "TTS_ATIVO": _bool(novo.tts_enabled),
             "TTS_OFFLINE_FALLBACK": _bool(novo.tts_offline_fallback),
             "SALVAR_HISTORICO": _bool(novo.save_history),
