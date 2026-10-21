@@ -6,7 +6,8 @@ dados ficam e como isso foi implementado. Para instalar e usar o app, veja o
 
 ## 1. Visão geral
 
-Cada pergunta é salva **automaticamente** na conversa atual. A barra à esquerda lista todas as
+Cada pergunta é salva **automaticamente** na conversa atual (no modo conversa por voz, cada
+rodada é salva assim que termina). A barra à esquerda lista todas as
 conversas salvas, no estilo dos chats de IA: você pode começar uma conversa nova, reabrir uma
 antiga e continuar nela, buscar, atualizar a lista e apagar.
 
