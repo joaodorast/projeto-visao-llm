@@ -180,6 +180,7 @@ QStatusBar {{ background: {SURFACE}; color: {MUTED}; font-size: 12px; border-top
 #camBadge {{ font-size: 12px; font-weight: 600; color: {MUTED}; }}
 #camBadge[estado="ok"]    {{ color: {ACCENT}; }}
 #camBadge[estado="falha"] {{ color: #dc2626; }}
+#camBadge[estado="off"]   {{ color: {SUBTLE}; }}
 #hint {{ color: {MUTED}; font-size: 12px; }}
 
 #navRail {{ background: #141417; border-right: 1px solid #26262b; }}
