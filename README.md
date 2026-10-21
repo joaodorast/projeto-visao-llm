@@ -11,7 +11,10 @@ alta**, mostrando na tela a foto usada, a pergunta e a resposta.
 
 **Destaques**
 
-- Pergunta por voz (a gravação para sozinha quando você fica em silêncio) ou digitada.
+- **Conversa por voz com um clique**: o app percebe quando você começa e termina de falar,
+  responde e volta a ouvir sozinho, até você dizer "encerrar conversa" (ou clicar em Encerrar).
+- Respostas em poucos segundos: cerca de 4 s até o texto e 7 s até a voz começar.
+- Também aceita pergunta digitada.
 - Dois provedores: **Gemini** (tem camada gratuita) e **OpenAI**, trocáveis sem mudar código.
 - Conversas salvas automaticamente, com barra lateral para reabrir, continuar, buscar e apagar.
 - Páginas de **Diagnóstico**, **Ajustes** e **Ajuda** dentro do app, e tela cheia com **F11**.
@@ -76,13 +79,18 @@ gravados no `.env`.
 
 ## 4. Como usar
 
-1. Clique em **🎤 Clique para falar** (ou `Ctrl+Espaço`), faça a pergunta e fique em silêncio: a
-   gravação para sozinha. Também dá para clicar em **■ Parar e enviar** ou digitar a pergunta e
-   apertar `Enter`.
+1. Clique **uma vez** em **🎤 Começar conversa** (ou `Ctrl+Espaço`). A partir daí é só falar: o
+   app percebe quando você começa a falar e, quando você fica em silêncio, entende que a pergunta
+   terminou.
 2. No instante em que você termina de falar, a câmera tira a foto que vai junto com a pergunta.
-3. A resposta aparece na tela e é falada. Durante a fala, o botão vira **■ Interromper fala**
-   (`Esc`). Use **Repetir** para ouvir de novo.
-4. As perguntas seguintes entram na mesma conversa, com o contexto das últimas trocas.
+3. A resposta aparece na tela e é falada; em seguida, o app **volta a ouvir sozinho**, com o
+   contexto das últimas trocas. Para cortar uma resposta falada, aperte `Esc`.
+4. Para terminar, diga **"encerrar conversa"** (também valem "pode parar", "tchau", "era só isso"…)
+   ou clique em **■ Encerrar conversa**. O app se despede e para de ouvir.
+
+Também dá para digitar a pergunta e apertar `Enter`. Quem preferir clicar a cada pergunta pode
+desligar **Conversa contínua** em Ajustes: aí o botão vira **🎤 Clique para falar** e cada clique
+faz uma pergunta.
 
 A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever → Analisar → Falar**
 (RF05). Perguntas e respostas longas ganham barra de rolagem na própria caixa.
@@ -122,9 +130,9 @@ Tudo fica em `registros/` (`interacoes.jsonl` e as fotos em `registros/AAAA-MM-D
 
 | Tecla | Ação |
 |---|---|
-| `Ctrl+Espaço` | Começa a ouvir; de novo, para e envia |
+| `Ctrl+Espaço` | Começa a conversa por voz; de novo, encerra |
 | `Enter` | Envia a pergunta digitada |
-| `Esc` | Interrompe a gravação ou a fala; sai da tela cheia |
+| `Esc` | Corta a resposta falada; ouvindo, encerra a conversa; sai da tela cheia |
 | `Ctrl+N` | Nova conversa |
 | `Ctrl+1` … `Ctrl+4` | Assistente, Diagnóstico, Ajustes e Ajuda |
 | `F11` | Tela cheia |
@@ -151,6 +159,7 @@ do arquivo. Referência completa:
 | `SEM_FALA_SEG` | `6` | Segundos sem fala até avisar "Não ouvi nenhuma pergunta" |
 | `TIMEOUT_REQUISICAO` | `30` | Tempo máximo de cada chamada à API, em segundos |
 | `TENTATIVAS_API` | `2` | Novas tentativas em falhas temporárias da API |
+| `CONVERSA_CONTINUA` | `true` | Um clique inicia a conversa e o app fica ouvindo; `false` = um clique por pergunta |
 | `TTS_ATIVO` | `true` | Falar as respostas |
 | `TTS_OFFLINE_FALLBACK` | `true` | Usar a voz do computador (pyttsx3) se a voz online falhar |
 | `SALVAR_HISTORICO` | `true` | Salvar as conversas |
@@ -178,7 +187,7 @@ Pelo `.env`, mude `PROVEDOR` e preencha a chave correspondente; se tiver definid
 pytest
 ```
 
-**175 testes automatizados**, sem usar rede, câmera ou microfone reais (dublês e transporte HTTP
+**209 testes automatizados**, sem usar rede, câmera ou microfone reais (dublês e transporte HTTP
 simulado). Cobrem o fluxo completo, falha de conexão, timeout, erros HTTP da API, câmera
 indisponível, microfone ausente, falha de voz, responsividade da interface, conversas, navegação,
 Diagnóstico e Ajustes. Os testes nunca gravam no seu `.env`. Detalhes e o roteiro de testes
@@ -252,6 +261,10 @@ Logs completos ficam em `logs/app.log`.
 - Com `SALVAR_HISTORICO=false` (ou a opção desligada em Ajustes) nada é gravado, e a barra de
   conversas mostra um aviso.
 - O microfone usado é sempre o padrão do sistema.
+- A conversa é por turnos: enquanto o app fala, ele não ouve. Para interromper uma resposta,
+  use `Esc` (ou **Encerrar conversa**); interromper falando por cima ainda não é possível.
+- O "tempo real" é por rodadas rápidas (cerca de 4 s até o texto e 7 s até a voz), não por
+  áudio contínuo em streaming.
 
 Detalhes e a correção planejada em
 [docs/README_DESENVOLVIMENTO.md](docs/README_DESENVOLVIMENTO.md#5-limitações-conhecidas).
