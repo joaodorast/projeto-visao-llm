@@ -181,8 +181,8 @@ def test_aplicar_troca_provedor_sem_reiniciar(janela, cfg):
 
     assert janela.config is novo
     assert janela._assistant is None  # recriado na próxima pergunta
-    assert "Openai" in janela.subtitle.text() and "gpt-4.1-mini" in janela.subtitle.text()
-    assert janela.diagnostics_page.linhas[-1].nome == "Conexão com Openai"
+    assert "OpenAI" in janela.subtitle.text() and "gpt-4.1-mini" in janela.subtitle.text()
+    assert janela.diagnostics_page.linhas[-1].nome == "Conexão com OpenAI"
     assert "gpt-4.1-mini" in janela.help_page.sobre_label.text()
 
 
