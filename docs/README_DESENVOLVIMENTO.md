@@ -61,8 +61,11 @@ Usar o Gemini não exigiu reescrever o fluxo, só trocar as implementações de 
 
 Dois detalhes foram descobertos nos testes com a API real:
 
-- Os modelos antigos (`gemini-2.5-flash`) não estão mais disponíveis para contas novas; o padrão
-  passou a ser `gemini-3.8-flash` (e `gemini-3.8-flash-tts` para voz).
+- Os modelos antigos (`gemini-2.5-flash`) não estão mais disponíveis para contas novas.
+- O `gemini-3.8-flash` levava de 15 a 36 s por etapa e, com frequência, devolvia erro 503 (alta
+  demanda). Medidos com a API real, os modelos 3.5 respondem em cerca de 1 a 2 s por etapa, por isso
+  os padrões são `gemini-3.5-flash` (visão) e `gemini-3.5-flash-lite` (transcrição); a voz usa
+  `gemini-3.8-flash-tts` (cerca de 3 s).
 - O Gemini 3 "pensa" antes de responder, e esses tokens contam no limite, o que cortava a resposta
   no meio. Por isso as chamadas enviam `reasoning_effort="low"`.
 
