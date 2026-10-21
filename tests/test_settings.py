@@ -197,3 +197,20 @@ def test_aplicar_e_recusado_durante_uma_pergunta(janela, cfg, monkeypatch):
     monkeypatch.setattr(type(janela), "busy", property(lambda self: True))
     assert janela._aplicar_config(replace(cfg, camera_source=5)) is False
     assert janela.config.camera_source == 0
+
+
+def test_interruptor_de_conversa_continua_e_salvo(app, cfg):
+    aplicar = Aplicador()
+    page = SettingsPage(cfg, aplicar)
+    assert page.continuous.isChecked()
+    page.continuous.setChecked(False)
+    page.save_button.click()
+    assert aplicar.recebidos[-1].continuous_conversation is False
+    assert dotenv_values(cfg.env_path)["CONVERSA_CONTINUA"] == "false"
+
+
+def test_aplicar_conversa_continua_troca_o_texto_do_botao(janela, cfg):
+    from visao_llm.gui.main_window import TEXTO_CONVERSA, TEXTO_MIC
+    assert janela.mic_button.text() == TEXTO_CONVERSA
+    janela._aplicar_config(replace(cfg, continuous_conversation=False))
+    assert janela.mic_button.text() == TEXTO_MIC
