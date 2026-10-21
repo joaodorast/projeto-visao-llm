@@ -37,6 +37,8 @@ diga isso com franqueza e sugira o que o usuário pode fazer (ex.: aproximar o o
 - Seja breve: no máximo 3 frases curtas, pois a resposta será falada em voz alta.
 - Não use markdown, listas, emojis nem símbolos; escreva números por extenso quando curtos.
 - Se a pergunta não tiver relação com a imagem, responda normalmente e de forma breve.
+- Se a mensagem disser que não há foto (câmera desligada), responda sem inventar a cena e, se a \
+pergunta depender da imagem, diga que a câmera está desligada.
 """
 
 
@@ -124,12 +126,17 @@ class VisionAssistant:
 
     def build_messages(self, jpeg: bytes, pergunta: str,
                        historico: Sequence[Turn] = ()) -> list[dict]:
-        b64 = base64.b64encode(jpeg).decode("ascii")
+        """`jpeg` vazio = pergunta sem foto (câmera desligada no app)."""
         mensagens: list[dict] = [{"role": "system", "content": self.system_prompt}]
         # Contexto textual das últimas trocas (sem reenviar imagens antigas)
         for turno in historico:
             mensagens.append({"role": "user", "content": turno.pergunta})
             mensagens.append({"role": "assistant", "content": turno.resposta})
+        if not jpeg:
+            mensagens.append({"role": "user",
+                              "content": f"{pergunta}\n\n(Sem foto: a câmera está desligada.)"})
+            return mensagens
+        b64 = base64.b64encode(jpeg).decode("ascii")
         mensagens.append({
             "role": "user",
             "content": [
