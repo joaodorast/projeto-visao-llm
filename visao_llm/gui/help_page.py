@@ -10,8 +10,8 @@ from ..config import Config, nome_provedor
 from .widgets import Card
 
 ATALHOS = [
-    ("Ctrl + Espaço", "Começa a ouvir a pergunta; de novo, para e envia"),
-    ("Esc", "Interrompe a gravação ou a fala; sai da tela cheia"),
+    ("Ctrl + Espaço", "Começa a conversa por voz; de novo, encerra"),
+    ("Esc", "Corta a resposta falada; ouvindo, encerra a conversa; sai da tela cheia"),
     ("Enter", "Envia a pergunta digitada"),
     ("Ctrl + N", "Nova conversa"),
     ("Ctrl + 1, 2, …", "Vai para as páginas da barra de navegação, na ordem"),
@@ -20,13 +20,16 @@ ATALHOS = [
 ]
 
 PASSOS = [
-    ("Pergunte", "Clique em <b>Clique para falar</b> (ou <b>Ctrl+Espaço</b>), faça a pergunta e fique "
-                 "em silêncio: a gravação para sozinha. Também dá para digitar."),
+    ("Comece a conversa", "Clique em <b>Começar conversa</b> (ou <b>Ctrl+Espaço</b>) uma vez. "
+                          "A partir daí é só falar: o app percebe quando você começa e termina "
+                          "cada pergunta. Também dá para digitar."),
     ("A IA olha", "No instante em que você termina de falar, a câmera tira a foto que vai junto com a "
                   "pergunta."),
     ("Ela responde", "A resposta aparece na tela e é falada. Use <b>Repetir</b> para ouvir de novo."),
-    ("Continue", "Perguntas seguintes entram na mesma conversa, com o contexto das últimas trocas. "
-                 "<b>Nova conversa</b> começa do zero."),
+    ("Continue ou encerre", "Depois de responder, o app volta a ouvir sozinho, com o contexto das "
+                            "últimas trocas. Para terminar, diga <b>“encerrar conversa”</b> (ou "
+                            "“pode parar”, “tchau”) ou clique em <b>Encerrar conversa</b>. "
+                            "<b>Nova conversa</b> começa do zero."),
 ]
 
 

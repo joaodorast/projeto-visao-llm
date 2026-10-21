@@ -133,6 +133,51 @@ class InteractionWorker(QThread):
             self.failed.emit("Erro", repr(exc))
 
 
+class ConversationWorker(QThread):
+    """Modo conversa: ouve, responde e volta a ouvir até o usuário encerrar (voz ou botão)."""
+
+    state_changed = pyqtSignal(str, str)
+    level_changed = pyqtSignal(float)
+    image_captured = pyqtSignal(QImage)
+    question_ready = pyqtSignal(str)
+    answer_ready = pyqtSignal(object)
+    turn_done = pyqtSignal()                      # rodada salva: atualizar a barra de conversas
+    turn_failed = pyqtSignal(str, str)            # erro em uma rodada; a conversa continua
+    failed = pyqtSignal(str, str)                 # erro que encerra a conversa
+    ended = pyqtSignal(str)                       # "voz" (pedido falado) ou "botao"
+
+    def __init__(self, assistant: Assistant, speak: bool = True, player=None, parent=None):
+        super().__init__(parent)
+        self.assistant = assistant
+        self.speak = speak
+        self.player = player
+        self.stop_event = threading.Event()
+
+    def stop_listening(self) -> None:
+        """Encerra a conversa: para de ouvir e interrompe a fala em andamento."""
+        self.stop_event.set()
+        if self.player is not None:
+            self.player.stop()
+
+    def run(self) -> None:
+        cb = Callbacks(
+            on_state=lambda s, d: self.state_changed.emit(s.name, d),
+            on_level=self.level_changed.emit,
+            on_captured=lambda f: self.image_captured.emit(frame_to_qimage(f)),
+            on_question=self.question_ready.emit,
+            on_answer=self.answer_ready.emit,
+            on_error=lambda exc: self.turn_failed.emit(exc.titulo, exc.mensagem),
+            on_turn_done=self.turn_done.emit,
+        )
+        try:
+            self.ended.emit(self.assistant.converse(self.stop_event, cb, speak=self.speak))
+        except AppError as exc:
+            self.failed.emit(exc.titulo, exc.mensagem)
+        except Exception as exc:  # pragma: no cover - o pipeline já embrulha
+            log.exception("Falha inesperada na conversa")
+            self.failed.emit("Erro", repr(exc))
+
+
 class SpeakWorker(QThread):
     state_changed = pyqtSignal(str, str)
     failed = pyqtSignal(str, str)
@@ -151,5 +196,6 @@ class SpeakWorker(QThread):
             self.failed.emit(exc.titulo, exc.mensagem)
 
 
-__all__ = ["CameraThread", "InteractionWorker", "SpeakWorker", "frame_to_qimage",
+__all__ = ["CameraThread", "ConversationWorker", "InteractionWorker", "SpeakWorker",
+           "frame_to_qimage",
            "InteractionResult"]

@@ -44,9 +44,11 @@ class FakeRecorder:
     def __init__(self, erro: Exception | None = None):
         self.erro = erro
         self.chamadas = 0
+        self.aguardou_fala: list[bool] = []
 
-    def record(self, stop_event=None, on_level=None) -> bytes:
+    def record(self, stop_event=None, on_level=None, aguardar_fala=False) -> bytes:
         self.chamadas += 1
+        self.aguardou_fala.append(aguardar_fala)
         if on_level:
             on_level(0.2)
         if self.erro:
@@ -55,12 +57,16 @@ class FakeRecorder:
 
 
 class FakeSTT:
+    """`texto` pode ser uma lista: cada transcrição devolve o próximo item (modo conversa)."""
+
     def __init__(self, texto="O que está sobre a mesa?", erro: Exception | None = None):
         self.texto, self.erro = texto, erro
 
     def transcribe(self, wav: bytes) -> str:
         if self.erro:
             raise self.erro
+        if isinstance(self.texto, list):
+            return self.texto.pop(0)
         return self.texto
 
 

@@ -13,8 +13,9 @@ técnica, a [arquitetura](ARQUITETURA.md).
 | Provedor **Gemini** | Implementado e validado com a API real (visão, transcrição e voz) |
 | Provedor **OpenAI** | Implementado e coberto por testes, **ainda não validado com a API real** (veja a seção 6) |
 | Conversas salvas e barra lateral | Implementadas (nova, abrir, continuar, buscar, atualizar e apagar) |
+| Modo conversa por voz | Um clique; o app ouve, responde e volta a ouvir até "encerrar conversa" (validado com a API real) |
 | Interface | Navegação por páginas (Assistente, Diagnóstico, Ajustes e Ajuda), tela cheia e tema próprio |
-| Testes automatizados | 175 aprovados, sem rede, câmera ou microfone |
+| Testes automatizados | 209 aprovados, sem rede, câmera ou microfone |
 | Teste manual completo (janela + webcam + microfone) | Roteiro pronto em [REGISTRO_DE_TESTES.md](REGISTRO_DE_TESTES.md); falta registrar a execução |
 
 **O projeto está completo para o escopo proposto**: ele faz o fluxo inteiro (ouvir a pergunta,
@@ -47,6 +48,9 @@ junto:
    ajustada à área útil da tela, ícones vetoriais e tema cinza e branco com detalhes em laranja.
 10. **Navegação:** barra de navegação com as páginas Assistente, Diagnóstico, Ajustes e Ajuda, e tela
     cheia com F11 ([README_INTERFACE.md](README_INTERFACE.md)).
+11. **Conversa em tempo real:** medição de latência com a API real e troca para os modelos mais
+    rápidos, botão para desligar a câmera e o modo conversa: um clique, o app ouve, responde e volta
+    a ouvir até o usuário dizer "encerrar conversa".
 
 ## 3. Suporte ao Gemini
 
@@ -84,7 +88,11 @@ Por prioridade:
    esse check na proteção da `main`.
 5. **Teste de integração opcional com a API real**, desligado por padrão e ativado por variável de
    ambiente, para detectar mudanças de modelo (que já aconteceram — veja a seção 3).
-6. **Melhorias de produto** (ideias, fora do escopo atual): escolher o microfone na interface (hoje é
+6. **Interromper falando por cima** (barge-in): hoje, enquanto o app fala, ele não ouve; seria
+   preciso cancelamento de eco para não ouvir a própria voz.
+7. **Áudio em streaming** (por exemplo, a API Live do Gemini), para respostas começarem a ser
+   faladas enquanto ainda são geradas.
+8. **Melhorias de produto** (ideias, fora do escopo atual): escolher o microfone na interface (hoje é
    usado o padrão do sistema), voz em streaming para responder mais rápido e renomear conversas na
    barra lateral.
 
@@ -121,6 +129,7 @@ pergunta salva. Está listada em "O que falta".
 ### Outras
 
 - O microfone usado é sempre o padrão do sistema.
+- O modo conversa é por turnos: enquanto o app fala, ele não ouve (veja "O que falta").
 - Ao salvar a página Ajustes, os valores em uso são gravados no `.env`, inclusive os que vieram de
   opções de linha de comando daquela execução (por exemplo, `--sem-voz`).
 
@@ -192,3 +201,4 @@ Combinados:
 | PR #16 | Revisão completa da documentação |
 | PR #17 | Modelos Gemini mais rápidos por padrão (base para a conversa em tempo real) |
 | PR #18 | Botão para desligar a câmera (perguntas sem foto) |
+| PR #19 | Modo conversa contínua com encerramento por voz |

@@ -104,6 +104,9 @@ class Config:
     silence_seconds: float = 1.3
     no_speech_timeout: float = 6.0
 
+    # Modo conversa: um clique e o app fica ouvindo, respondendo e ouvindo de novo
+    continuous_conversation: bool = True
+
     # Voz
     tts_enabled: bool = True
     tts_offline_fallback: bool = True
@@ -160,6 +163,7 @@ def load_config(env_file: str | os.PathLike | None = None) -> Config:
         no_speech_timeout=_float("SEM_FALA_SEG", env("SEM_FALA_SEG"), padrao.no_speech_timeout),
         tts_enabled=_bool(env("TTS_ATIVO"), padrao.tts_enabled),
         tts_offline_fallback=_bool(env("TTS_OFFLINE_FALLBACK"), padrao.tts_offline_fallback),
+        continuous_conversation=_bool(env("CONVERSA_CONTINUA"), padrao.continuous_conversation),
         save_history=_bool(env("SALVAR_HISTORICO"), padrao.save_history),
         history_dir=Path(env("PASTA_HISTORICO") or padrao.history_dir),
         log_dir=Path(env("PASTA_LOGS") or padrao.log_dir),

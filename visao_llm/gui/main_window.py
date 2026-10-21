@@ -25,7 +25,8 @@ from .navigation import NavRail
 from .settings_page import SettingsPage
 from .sidebar import ConversationSidebar
 from .widgets import Card, ImageView, StepIndicator, scrollable
-from .workers import CameraThread, InteractionWorker, SpeakWorker, frame_to_qimage
+from .workers import (CameraThread, ConversationWorker, InteractionWorker, SpeakWorker,
+                      frame_to_qimage)
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +39,10 @@ TIPO_PILL = {
 }
 
 TEXTO_MIC = "🎤  Clique para falar"
+TEXTO_CONVERSA = "🎤  Começar conversa"
+TEXTO_ENCERRAR = "■  Encerrar conversa"
+DICA_CONVERSA = ("Conversa ativa: fale quando quiser, sem clicar de novo  ·  diga "
+                 "\u201cencerrar conversa\u201d ou clique em Encerrar para terminar")
 
 
 class MainWindow(QMainWindow):
@@ -56,6 +61,7 @@ class MainWindow(QMainWindow):
         self._ultima_resposta: str | None = None
         self._conversa_id = new_session_id()
         self._camera_ligada = True
+        self._conversa_ativa = False
         self._history_store = HistoryStore(config.history_dir)
 
         self.setWindowTitle("Visão e Interpretação do Ambiente com LLM")
@@ -158,7 +164,7 @@ class MainWindow(QMainWindow):
         esquerda.addWidget(self.live_card, 1)
 
         controles = Card("Pergunta")
-        self.mic_button = QPushButton(TEXTO_MIC, objectName="micButton")
+        self.mic_button = QPushButton(self._texto_mic(), objectName="micButton")
         self.mic_button.setCursor(Qt.PointingHandCursor)
         self.mic_button.clicked.connect(self._on_mic_clicked)
         controles.add(self.mic_button)
@@ -177,7 +183,11 @@ class MainWindow(QMainWindow):
         linha.addWidget(self.text_input, 1)
         linha.addWidget(self.send_button)
         controles._layout.addLayout(linha)
-        controles.add(QLabel("Atalhos: Ctrl+Espaço fala / para  ·  Esc interrompe",
+        self.conversation_hint = QLabel(DICA_CONVERSA, objectName="conversationHint")
+        self.conversation_hint.setWordWrap(True)
+        self.conversation_hint.hide()
+        controles.add(self.conversation_hint)
+        controles.add(QLabel("Atalhos: Ctrl+Espaço começa / encerra  ·  Esc interrompe a fala",
                              objectName="hint"))
         esquerda.addWidget(controles, 0)
         corpo.addLayout(esquerda, 4)
@@ -266,8 +276,12 @@ class MainWindow(QMainWindow):
         self.status_pill.style().polish(self.status_pill)
         self.steps.set_state(nome, self._origem)
 
-        modo, texto, ativo = "normal", TEXTO_MIC, True
-        if nome == "OUVINDO":
+        modo, texto, ativo = "normal", self._texto_mic(), True
+        if self._conversa_ativa:
+            # durante a conversa o botão sempre encerra; a cor acompanha a etapa
+            texto = TEXTO_ENCERRAR
+            modo = {"OUVINDO": "ouvindo", "FALANDO": "falando"}.get(nome, "conversa")
+        elif nome == "OUVINDO":
             modo, texto = "ouvindo", "■  Parar e enviar"
         elif nome in ("CAPTURANDO", "TRANSCREVENDO", "PROCESSANDO"):
             texto, ativo = "⏳  Processando…", False
@@ -328,7 +342,16 @@ class MainWindow(QMainWindow):
                 return None
         return self._assistant
 
+    def _texto_mic(self) -> str:
+        return TEXTO_CONVERSA if self.config.continuous_conversation else TEXTO_MIC
+
     def _on_mic_clicked(self) -> None:
+        if self._conversa_ativa:
+            self._encerrar_conversa()
+            return
+        if self.config.continuous_conversation and not self.busy:
+            self._iniciar_conversa()
+            return
         if self._estado == "OUVINDO" and self._worker is not None:
             self._worker.stop_listening()
             return
@@ -339,6 +362,13 @@ class MainWindow(QMainWindow):
             self._start(None)
 
     def _on_escape(self) -> None:
+        if self._conversa_ativa:
+            # na conversa, Esc corta a resposta falada; ouvindo, encerra a conversa
+            if self._estado == "FALANDO":
+                self.player.stop()
+            else:
+                self._encerrar_conversa()
+            return
         if self._estado == "OUVINDO" and self._worker is not None:
             self._worker.stop_listening()
         elif self._estado == "FALANDO":
@@ -373,6 +403,7 @@ class MainWindow(QMainWindow):
         """Aplica ajustes sem reiniciar. Devolve False se houver uma pergunta em andamento."""
         if self.busy:
             return False
+        self.mic_button.setText(TEXTO_CONVERSA if novo.continuous_conversation else TEXTO_MIC)
         trocou_camera = novo.camera_source != self.config.camera_source
         self.config = novo
         self._assistant = None  # recriado na próxima pergunta, com o novo provedor/modelos
@@ -477,6 +508,57 @@ class MainWindow(QMainWindow):
             self.captured_view.clear_image("Sem foto: a câmera está desligada")
         w.start()
 
+    # ======================================================= modo conversa
+    def _iniciar_conversa(self) -> None:
+        """Um clique: o app ouve, responde e volta a ouvir até a conversa ser encerrada."""
+        self._hide_banners()
+        assistant = self._get_assistant()
+        if assistant is None:
+            return
+        self._sync_assistant(assistant)
+        self._origem = "voz"
+        self._conversa_ativa = True
+        w = ConversationWorker(assistant, speak=self.config.tts_enabled, player=self.player,
+                               parent=self)
+        w.state_changed.connect(self._set_state)
+        w.level_changed.connect(lambda v: self.level_bar.setValue(min(100, int(v * 600))))
+        w.image_captured.connect(self.captured_view.set_image)
+        w.question_ready.connect(lambda q: self._set_text(self.question_label, q, ""))
+        w.answer_ready.connect(self._on_answer)
+        w.turn_done.connect(self._refresh_sidebar)
+        w.turn_failed.connect(self._show_error)
+        w.failed.connect(self._on_failed)
+        w.ended.connect(self._on_conversa_encerrada)
+        w.finished.connect(self._on_conversa_finished)
+        self._worker = w
+        self.conversation_hint.show()
+        if not self._camera_ligada:
+            self.captured_view.clear_image("Sem foto: a câmera está desligada")
+        self._set_text(self.question_label, None, "Pode falar: estou ouvindo…")
+        w.start()
+
+    def _encerrar_conversa(self) -> None:
+        if self._worker is not None and self._conversa_ativa:
+            self._worker.stop_listening()
+            self.mic_button.setEnabled(False)
+            self.mic_button.setText("Encerrando…")
+
+    def _on_conversa_encerrada(self, motivo: str) -> None:
+        texto = ("Conversa encerrada a seu pedido." if motivo == "voz"
+                 else "Conversa encerrada.")
+        self.statusBar().showMessage(texto, 6000)
+
+    def _on_conversa_finished(self) -> None:
+        self._conversa_ativa = False
+        self.conversation_hint.hide()
+        if self._estado != "ERRO":
+            self._set_state("OCIOSO")
+        else:
+            self._set_state("ERRO")
+        self.mic_button.setEnabled(True)
+        self.mic_button.setText(self._texto_mic())
+        self._refresh_sidebar()
+
     def _on_answer(self, resultado: InteractionResult) -> None:
         self._ultima_resposta = resultado.resposta
         self._set_text(self.answer_label, resultado.resposta, "")
@@ -505,7 +587,7 @@ class MainWindow(QMainWindow):
             self._set_state(self._estado)  # reabilita controles
             # mantém o estado visível, mas libera o botão
             self.mic_button.setEnabled(True)
-            self.mic_button.setText(TEXTO_MIC)
+            self.mic_button.setText(self._texto_mic())
         self._refresh_sidebar()  # a interação acabou de ser gravada em disco
 
     def _on_repeat(self) -> None:

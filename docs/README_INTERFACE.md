@@ -43,11 +43,11 @@ Outros atalhos:
 
 | Tecla | Ação |
 |---|---|
-| `Ctrl+Espaço` | Começa a ouvir a pergunta; de novo, para e envia |
+| `Ctrl+Espaço` | Começa a conversa por voz; de novo, encerra |
 | `Enter` | Envia a pergunta digitada |
 | `Ctrl+N` | Nova conversa |
 | `F11` | Entra e sai da tela cheia |
-| `Esc` | Interrompe a gravação ou a fala; se não houver nenhuma, sai da tela cheia |
+| `Esc` | Na conversa: corta a resposta falada ou, ouvindo, encerra a conversa; fora dela, sai da tela cheia |
 | `Ctrl+Shift+C` | Liga e desliga a câmera |
 
 ## 3. Tela cheia
@@ -60,6 +60,42 @@ estado anterior: maximizada, se estava maximizada, ou no tamanho normal.
 
 É a tela de uso: câmera ao vivo, botão para falar, foto usada, pergunta, resposta e as perguntas da
 conversa atual. O funcionamento das conversas está em [README_CONVERSAS.md](README_CONVERSAS.md).
+
+### Modo conversa
+
+Com **Conversa contínua** ligada (padrão), basta **um clique** em **🎤 Começar conversa**:
+
+1. O app fica ouvindo e percebe sozinho quando você começa a falar; quando você fica em silêncio
+   (1,3 s, ajustável em Ajustes), a pergunta termina.
+2. A foto é tirada, a pergunta é transcrita, analisada e respondida em texto e voz.
+3. O app **volta a ouvir sozinho**, mantendo o contexto das últimas trocas.
+4. Para terminar, diga uma frase de encerramento ou clique em **■ Encerrar conversa**. O app
+   responde "Tudo bem, encerrando a conversa" e para de ouvir.
+
+Frases que encerram (curtas, de até 7 palavras): "encerrar conversa", "encerra a conversa",
+"finalizar conversa", "pode parar", "pode encerrar", "parar de ouvir", "era só isso", "até logo",
+"tchau", "chega", "pare", "fim", entre outras, com ou sem "obrigado" ou "por favor". Perguntas que
+só mencionam essas palavras, como "para que serve isso?" ou "quanto falta para o fim do jogo?",
+**não** encerram.
+
+Durante a conversa:
+
+- o botão vira **■ Encerrar conversa** (laranja enquanto ouve) e uma faixa lembra como terminar;
+- `Esc` corta a resposta falada (e o app volta a ouvir); se estiver ouvindo, encerra a conversa;
+- cada rodada é salva na conversa da barra lateral assim que termina;
+- silêncio ou ruído não encerram nada: o app simplesmente continua ouvindo;
+- uma falha de rede ou da API em uma rodada aparece no aviso vermelho e a conversa continua;
+  sem microfone ou sem chave, a conversa termina com o aviso correspondente;
+- trocar de conversa, salvar Ajustes ou começar uma nova conversa fica bloqueado até encerrar.
+
+Com **Conversa contínua** desligada, o botão é **🎤 Clique para falar** e cada clique faz uma
+pergunta (a gravação para sozinha no silêncio ou em **■ Parar e enviar**).
+
+**Tempo de resposta:** medido com a API real, o texto da resposta aparece cerca de 4 s depois que
+você para de falar (transcrição ~1,5 s + análise ~2 s) e a voz começa uns 3 s depois. A conversa é
+por turnos: enquanto o app fala, ele não ouve.
+
+### Outros recursos
 
 - **Textos longos:** pergunta e resposta ficam em caixas com barra de rolagem, que aparece só
   quando o texto não cabe. A roda do mouse rola com o ponteiro sobre o próprio texto.
@@ -120,7 +156,7 @@ hora, sem reiniciar. **Descartar** volta aos valores em uso.
 | Provedor de IA | Provedor (Gemini ou OpenAI) e chave da API |
 | Modelos | Visão, transcrição da fala, voz (síntese) e nome da voz, com **Restaurar padrões** |
 | Câmera e microfone | Câmera (`0`, `1`… ou caminho de vídeo/imagem), silêncio que encerra a pergunta (0,3 a 5 s) e duração máxima da pergunta (3 a 60 s) |
-| Voz e conversas | Interruptores: falar as respostas, usar a voz do computador se a online falhar, salvar as conversas |
+| Voz e conversas | Interruptores: conversa contínua, falar as respostas, usar a voz do computador se a online falhar, salvar as conversas |
 
 ### A chave da API
 
@@ -142,7 +178,8 @@ hora, sem reiniciar. **Descartar** volta aos valores em uso.
 ### O que é gravado no `.env`
 
 `PROVEDOR`, `MODELO_VISAO`, `MODELO_STT`, `MODELO_TTS`, `VOZ_TTS`, `CAMERA`, `SILENCIO_SEG`,
-`GRAVACAO_MAX_SEG`, `TTS_ATIVO`, `TTS_OFFLINE_FALLBACK`, `SALVAR_HISTORICO` e, só se você digitar
+`GRAVACAO_MAX_SEG`, `CONVERSA_CONTINUA`, `TTS_ATIVO`, `TTS_OFFLINE_FALLBACK`, `SALVAR_HISTORICO` e, só
+se você digitar
 uma nova, a chave do provedor.
 
 O arquivo é atualizado com cuidado:
@@ -203,7 +240,9 @@ atenção; vermelho e âmbar ficam reservados para erros e avisos.
 | Parte | Arquivo | Papel |
 |---|---|---|
 | Barra de navegação | `visao_llm/gui/navigation.py` | Botões de página, tela cheia; só emite sinais |
-| Páginas e tela cheia | `visao_llm/gui/main_window.py` | Páginas empilhadas, atalhos, F11/Esc, aplicação dos ajustes |
+| Páginas e tela cheia | `visao_llm/gui/main_window.py` | Páginas empilhadas, atalhos, F11/Esc, modo conversa, câmera, aplicação dos ajustes |
+| Modo conversa (lógica) | `visao_llm/pipeline.py` | `Assistant.converse()` e `pedido_de_encerramento()` |
+| Modo conversa (thread) | `visao_llm/gui/workers.py` | `ConversationWorker`: roda a conversa fora da thread da interface |
 | Diagnóstico (lógica) | `visao_llm/diagnostics.py` | Verificações compartilhadas entre o terminal e a página |
 | Diagnóstico (tela) | `visao_llm/gui/diagnostics_page.py` | Execução em segundo plano, selos, resumo e dicas |
 | Ajustes (tela) | `visao_llm/gui/settings_page.py` | Formulário, regras da chave e dos modelos |
@@ -233,11 +272,13 @@ Os testes não usam rede, câmera nem microfone reais; a interface roda em modo 
 |---|---|---|
 | `tests/test_navigation.py` | 7 | Troca de página, atalhos, tela cheia (F11, botão e `Esc`) e conteúdo da Ajuda |
 | `tests/test_diagnostics.py` | 7 | Coleta dos resultados, saída do terminal, página com sucesso e com falha, execução na primeira visita |
-| `tests/test_settings.py` | 14 | Carregar, trocar provedor, chave, salvar, descartar, recusa durante pergunta, aplicação sem reiniciar, interruptor |
+| `tests/test_settings.py` | 16 | Carregar, trocar provedor, chave, salvar, descartar, recusa durante pergunta, aplicação sem reiniciar, interruptor |
 | `tests/test_env_file.py` | 6 | Preservar comentários, ativar chave comentada, aspas, criar arquivo, gravação atômica |
 | `tests/test_scroll.py` | 8 | Rolagem de textos longos, roda do mouse sobre o texto, tamanho da janela |
 | `tests/test_icons.py` | 5 | Ícones desenhados e seus estados |
 | `tests/test_theme.py` | 3 | Destaque laranja, ausência de cores fixas fora do `style.py`, indicador da câmera |
+| `tests/test_camera_off.py` | 6 | Câmera desligada: perguntas sem foto, botão e indicador |
+| `tests/test_conversation_mode.py` | 32 | Frases de encerramento, espera pela fala, laço da conversa, erros e botão/Esc na interface |
 
 Os testes são impedidos de gravar no `.env` real do projeto, onde fica a chave da API.
 

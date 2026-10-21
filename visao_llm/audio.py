@@ -2,6 +2,9 @@
 
 A gravação para sozinha quando o usuário termina de falar (detecção de silêncio
 por energia), quando atinge o tempo máximo, ou quando o usuário clica em "Parar".
+
+No modo conversa, a gravação espera a fala começar pelo tempo que for preciso
+(`aguardar_fala=True`) e só o trecho a partir de um pouco antes da fala é enviado.
 """
 
 from __future__ import annotations
@@ -58,9 +61,12 @@ class SilenceDetector:
     calibration_seconds: float = 0.3
     min_threshold: float = 0.012
     noise_factor: float = 3.0
+    #: Modo conversa: espera a fala sem limite; o tempo máximo conta a partir do início da fala.
+    wait_forever: bool = False
 
     def __post_init__(self) -> None:
         self.elapsed = 0.0
+        self.speech_elapsed = 0.0
         self.speech_started = False
         self._silence_run = 0.0
         self._noise_samples: list[float] = []
@@ -84,12 +90,16 @@ class SilenceDetector:
             self._silence_run = 0.0
         elif self.speech_started:
             self._silence_run += self.block_seconds
+        if self.speech_started:
+            self.speech_elapsed += self.block_seconds
 
-        if self.elapsed >= self.max_seconds - eps:
+        duracao = self.speech_elapsed if self.wait_forever else self.elapsed
+        if duracao >= self.max_seconds - eps:
             return True
         if self.speech_started and self._silence_run >= self.silence_seconds - eps:
             return True
-        if not self.speech_started and self.elapsed >= self.no_speech_timeout - eps:
+        if (not self.wait_forever and not self.speech_started
+                and self.elapsed >= self.no_speech_timeout - eps):
             return True
         return False
 
@@ -106,6 +116,9 @@ def pcm16_to_wav(pcm: np.ndarray, sample_rate: int) -> bytes:
 
 
 # ------------------------------------------------------------------- gravador
+PRE_FALA_SEG = 0.5  # áudio mantido antes do início da fala (não corta a primeira sílaba)
+
+
 class AudioRecorder:
     def __init__(self, sample_rate: int = 16000, block_seconds: float = 0.05,
                  silence_seconds: float = 1.3, max_seconds: float = 15.0,
@@ -127,10 +140,12 @@ class AudioRecorder:
         return str(info.get("name", "microfone"))
 
     def record(self, stop_event: threading.Event | None = None,
-               on_level: Callable[[float], None] | None = None) -> bytes:
+               on_level: Callable[[float], None] | None = None,
+               aguardar_fala: bool = False) -> bytes:
         """Grava até detectar o fim da fala. Retorna WAV (bytes).
 
-        Lança MicrophoneError (dispositivo) ou NoSpeechError (nada foi dito).
+        Com `aguardar_fala=True` (modo conversa), espera a fala começar sem limite de tempo,
+        até `stop_event`. Lança MicrophoneError (dispositivo) ou NoSpeechError (nada foi dito).
         """
         sd = _sounddevice()
         stop_event = stop_event or threading.Event()
@@ -140,8 +155,10 @@ class AudioRecorder:
             silence_seconds=self.silence_seconds,
             max_seconds=self.max_seconds,
             no_speech_timeout=self.no_speech_timeout,
+            wait_forever=aguardar_fala,
         )
         partes: list[np.ndarray] = []
+        blocos_pre_fala = max(1, int(PRE_FALA_SEG / (bloco / self.sample_rate)))
         try:
             with sd.InputStream(samplerate=self.sample_rate, channels=1, dtype="int16",
                                 blocksize=bloco, device=self.device) as stream:
@@ -154,6 +171,8 @@ class AudioRecorder:
                         on_level(nivel)
                     if detector.feed(nivel):
                         break
+                    if not detector.speech_started and len(partes) > blocos_pre_fala:
+                        del partes[0]  # antes da fala, guarda só o último meio segundo
         except MicrophoneError:
             raise
         except Exception as exc:  # PortAudioError, dispositivo removido etc.
@@ -166,7 +185,7 @@ class AudioRecorder:
             if on_level:
                 on_level(0.0)
 
-        if not partes:
+        if not partes or (aguardar_fala and not detector.speech_started):
             raise NoSpeechError("Gravação cancelada.")
         audio = np.concatenate(partes)
         parado_pelo_usuario = stop_event.is_set()

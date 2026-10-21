@@ -82,6 +82,12 @@ QMainWindow, #root {{ background: {BG}; }}
 #micButton[modo="ouvindo"] {{ background: {ACCENT}; color: #ffffff; }}
 #micButton[modo="ouvindo"]:hover {{ background: {ACCENT_HOVER}; }}
 #micButton[modo="falando"] {{ background: {GRAPHITE_2}; color: #ffffff; border: 2px solid {ACCENT}; }}
+#micButton[modo="conversa"] {{ background: {GRAPHITE_2}; color: #ffffff; }}
+#micButton[modo="conversa"]:hover {{ background: {GRAPHITE_3}; }}
+#conversationHint {{
+    font-size: 12px; color: {ACCENT_TEXT}; background: {ACCENT_SOFT}; border: 1px solid #fed7aa;
+    border-radius: 8px; padding: 7px 10px;
+}}
 
 QPushButton#secondary {{
     background: {SURFACE}; color: {TEXT_2}; border: 1px solid {BORDER_STRONG};

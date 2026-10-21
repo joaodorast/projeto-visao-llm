@@ -59,6 +59,14 @@ Webcam + Microfone → Captura e STT → API (modelo multimodal) → Resposta te
 - **Erros como parte do domínio:** toda falha conhecida vira uma subclasse de `AppError` com
   mensagem em português pronta para exibição. Exceções do SDK (OpenAI/Gemini) são traduzidas em um
   único ponto (`api_errors`).
+- **Modo conversa no pipeline:** `Assistant.converse()` repete o fluxo de voz sem novo clique.
+  O gravador espera a fala sem limite (`aguardar_fala=True`) e envia só a partir de meio segundo
+  antes dela; depois da transcrição, `pedido_de_encerramento()` reconhece frases curtas como
+  "encerrar conversa". Silêncio volta a ouvir, erros de uma rodada são avisados e a conversa
+  segue, e só falta de microfone ou de chave a interrompe. A interface roda o laço em um
+  `ConversationWorker` (QThread).
+- **Modelos rápidos por padrão:** para a conversa fluir, os padrões do Gemini são os modelos
+  que responderam em cerca de 1 a 2 s por etapa nas medições com a API real.
 - **Câmera opcional:** o `FrameProvider` devolve `None` quando a câmera foi desligada no app; o
   `Assistant` segue sem foto, o `VisionAssistant` envia só o texto (com o aviso de que não há
   imagem) e o registro é salvo sem arquivo de foto.
