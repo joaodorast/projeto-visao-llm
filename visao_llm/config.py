@@ -27,7 +27,9 @@ GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 PADROES_PROVEDOR = {
     "openai": dict(vision_model="gpt-4.1-mini", stt_model="gpt-4o-mini-transcribe",
                    tts_model="gpt-4o-mini-tts", tts_voice="alloy", base_url=None),
-    "gemini": dict(vision_model="gemini-3.8-flash", stt_model="gemini-3.8-flash",
+    # Gemini: modelos 3.5 respondem em ~1–2 s por etapa (medido); o 3.8 levava 15–36 s e
+    # frequentemente devolvia 503 por alta demanda, o que inviabiliza a conversa em tempo real.
+    "gemini": dict(vision_model="gemini-3.5-flash", stt_model="gemini-3.5-flash-lite",
                    tts_model="gemini-3.8-flash-tts", tts_voice="Kore",
                    base_url=GEMINI_BASE_URL),
 }
