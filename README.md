@@ -133,8 +133,8 @@ do arquivo. Referência completa:
 |---|---|---|
 | `PROVEDOR` | `openai` (o `.env.example` já vem com `gemini`) | `gemini` ou `openai` |
 | `GEMINI_API_KEY` / `OPENAI_API_KEY` | — | Chave do provedor escolhido (**obrigatória**) |
-| `MODELO_VISAO` | `gemini-3.8-flash` · `gpt-4.1-mini` | Modelo multimodal (imagem + pergunta) |
-| `MODELO_STT` | `gemini-3.8-flash` · `gpt-4o-mini-transcribe` | Transcrição da fala |
+| `MODELO_VISAO` | `gemini-3.5-flash` · `gpt-4.1-mini` | Modelo multimodal (imagem + pergunta) |
+| `MODELO_STT` | `gemini-3.5-flash-lite` · `gpt-4o-mini-transcribe` | Transcrição da fala |
 | `MODELO_TTS` | `gemini-3.8-flash-tts` · `gpt-4o-mini-tts` | Síntese de voz |
 | `VOZ_TTS` | `Kore` · `alloy` | Nome da voz |
 | `IDIOMA` | `pt` | Idioma da transcrição |
