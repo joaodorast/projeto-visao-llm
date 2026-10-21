@@ -2,7 +2,7 @@
 
 O projeto tem duas camadas de teste:
 
-1. **Testes automatizados (pytest)** — 175 casos que rodam sem câmera, microfone ou internet,
+1. **Testes automatizados (pytest)** — 209 casos que rodam sem câmera, microfone ou internet,
    usando dublês e um transporte HTTP simulado no próprio SDK (OpenAI e Gemini). Reproduzíveis com `pytest`.
 2. **Testes manuais com hardware real** — roteiro para a demonstração (três cenas diferentes) e
    para as falhas físicas (desconectar internet e webcam). Preencher durante a apresentação.
@@ -12,7 +12,7 @@ O projeto tem duas camadas de teste:
 ## 1. Testes automatizados
 
 **Execução:** `pytest -v` · **Ambiente:** Python 3.14, Windows 11, Qt offscreen
-**Resultado:** ✅ **175 aprovados, 0 falhas** (17/10/2026)
+**Resultado:** ✅ **209 aprovados, 0 falhas** (17/10/2026)
 
 | Arquivo | Qtd. | Cobre |
 |---|---|---|
@@ -30,7 +30,8 @@ O projeto tem duas camadas de teste:
 | `test_navigation.py` | 7 | navegação entre páginas, tela cheia (F11/Esc) e página de Ajuda |
 | `test_diagnostics.py` | 7 | coleta do diagnóstico, saída do terminal e página de Diagnóstico |
 | `test_env_file.py` | 6 | atualização do `.env` preservando comentários, aspas e gravação atômica |
-| `test_settings.py` | 14 | página Ajustes: provedor, chave, salvar, aplicar sem reiniciar e interruptores |
+| `test_settings.py` | 16 | página Ajustes: provedor, chave, salvar, aplicar sem reiniciar e interruptores |
+| `test_conversation_mode.py` | 32 | modo conversa: frases de encerramento, espera pela fala, laço, erros e interface |
 | `test_camera_off.py` | 6 | câmera desligada: perguntas sem foto do pipeline à interface |
 | `test_pipeline.py` | 18 | fluxo completo e falhas em cada etapa |
 | `test_gui.py` | 6 | RF05, RNF02, RNF03 na interface |
@@ -100,6 +101,9 @@ Cada interação fica salva em `registros/` (foto + pergunta + resposta + tempos
 
 | # | Procedimento | Resultado esperado | Resultado obtido | OK? |
 |---|---|---|---|---|
+| I0 | Clicar **uma vez** em **Começar conversa**, fazer três perguntas seguidas e dizer "encerrar conversa" | Responde às três sem novo clique; ao final se despede e para de ouvir | | |
+| I0b | Durante a conversa, ficar em silêncio por 30 s e depois perguntar | Continua ouvindo; responde normalmente | | |
+| I0c | Durante uma resposta falada, apertar `Esc` | A fala é cortada e o app volta a ouvir | | |
 | I1 | Fazer duas perguntas, clicar em **Nova conversa** e perguntar de novo | A conversa anterior continua na barra; a nova começa sem contexto | | |
 | I2 | Reabrir a conversa anterior e fazer uma pergunta de seguimento | A resposta usa o contexto; a pergunta entra na mesma conversa | | |
 | I3 | Apagar uma conversa (com confirmação) | Some da barra e de `registros/`, junto com as fotos | | |
