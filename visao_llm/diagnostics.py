@@ -11,7 +11,7 @@ from typing import Callable
 
 from .audio import AudioRecorder, _sounddevice
 from .camera import Camera
-from .config import Config
+from .config import Config, nome_provedor
 from .errors import AppError
 from .openai_service import api_errors, build_client
 
@@ -59,7 +59,7 @@ def checks(config: Config, camera_check: Callable[[], str] | None = None
         ("Câmera", camera_check or (lambda: _camera_padrao(config))),
         ("Microfone", lambda: AudioRecorder().check_available()),
         ("Alto-falante", _alto_falante),
-        (f"Conexão com {config.provider.capitalize()}", lambda: _api(config)),
+        (f"Conexão com {nome_provedor(config.provider)}", lambda: _api(config)),
     ]
 
 

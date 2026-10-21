@@ -6,7 +6,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QGridLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from .. import __version__
-from ..config import Config
+from ..config import Config, nome_provedor
 from .widgets import Card
 
 ATALHOS = [
@@ -16,6 +16,7 @@ ATALHOS = [
     ("Ctrl + N", "Nova conversa"),
     ("Ctrl + 1, 2, …", "Vai para as páginas da barra de navegação, na ordem"),
     ("F11", "Entra e sai da tela cheia"),
+    ("Ctrl + Shift + C", "Liga e desliga a câmera (desligada, as perguntas vão sem foto)"),
 ]
 
 PASSOS = [
@@ -105,6 +106,6 @@ class HelpPage(QScrollArea):
     def set_config(self, config: Config) -> None:
         self.sobre_label.setText(
             f"<b>Visão e Interpretação do Ambiente</b> · versão {__version__}<br>"
-            f"Provedor: <b>{config.provider.capitalize()}</b> · visão <code>{config.vision_model}</code> · "
+            f"Provedor: <b>{nome_provedor(config.provider)}</b> · visão <code>{config.vision_model}</code> · "
             f"transcrição <code>{config.stt_model}</code> · voz <code>{config.tts_model}</code><br>"
             "Documentação na pasta <code>docs/</code> do projeto.")

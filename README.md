@@ -15,6 +15,7 @@ alta**, mostrando na tela a foto usada, a pergunta e a resposta.
 - Dois provedores: **Gemini** (tem camada gratuita) e **OpenAI**, trocáveis sem mudar código.
 - Conversas salvas automaticamente, com barra lateral para reabrir, continuar, buscar e apagar.
 - Páginas de **Diagnóstico**, **Ajustes** e **Ajuda** dentro do app, e tela cheia com **F11**.
+- Câmera que pode ser desligada: as perguntas passam a ir sem foto.
 - Falhas de câmera, microfone, rede e API tratadas sem fechar o app.
 - Visual em cinza e branco, com poucos detalhes em laranja.
 
@@ -86,6 +87,10 @@ gravados no `.env`.
 A barra de etapas mostra em tempo real: **Ouvir → Capturar → Transcrever → Analisar → Falar**
 (RF05). Perguntas e respostas longas ganham barra de rolagem na própria caixa.
 
+**Câmera:** o botão **Desligar câmera** (no cartão da câmera, ou `Ctrl+Shift+C`) para a captura.
+Desligada, as perguntas vão sem foto: o modelo responde normalmente e avisa quando a pergunta
+depende da imagem. **Ligar câmera** volta ao normal.
+
 ### Páginas do app
 
 A barra de ícones à esquerda leva às páginas (também por `Ctrl+1` a `Ctrl+4`):
@@ -123,6 +128,7 @@ Tudo fica em `registros/` (`interacoes.jsonl` e as fotos em `registros/AAAA-MM-D
 | `Ctrl+N` | Nova conversa |
 | `Ctrl+1` … `Ctrl+4` | Assistente, Diagnóstico, Ajustes e Ajuda |
 | `F11` | Tela cheia |
+| `Ctrl+Shift+C` | Liga e desliga a câmera |
 
 ## 5. Configuração (`.env`)
 
@@ -172,7 +178,7 @@ Pelo `.env`, mude `PROVEDOR` e preencha a chave correspondente; se tiver definid
 pytest
 ```
 
-**169 testes automatizados**, sem usar rede, câmera ou microfone reais (dublês e transporte HTTP
+**175 testes automatizados**, sem usar rede, câmera ou microfone reais (dublês e transporte HTTP
 simulado). Cobrem o fluxo completo, falha de conexão, timeout, erros HTTP da API, câmera
 indisponível, microfone ausente, falha de voz, responsividade da interface, conversas, navegação,
 Diagnóstico e Ajustes. Os testes nunca gravam no seu `.env`. Detalhes e o roteiro de testes

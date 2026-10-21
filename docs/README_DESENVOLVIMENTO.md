@@ -14,7 +14,7 @@ técnica, a [arquitetura](ARQUITETURA.md).
 | Provedor **OpenAI** | Implementado e coberto por testes, **ainda não validado com a API real** (veja a seção 6) |
 | Conversas salvas e barra lateral | Implementadas (nova, abrir, continuar, buscar, atualizar e apagar) |
 | Interface | Navegação por páginas (Assistente, Diagnóstico, Ajustes e Ajuda), tela cheia e tema próprio |
-| Testes automatizados | 169 aprovados, sem rede, câmera ou microfone |
+| Testes automatizados | 175 aprovados, sem rede, câmera ou microfone |
 | Teste manual completo (janela + webcam + microfone) | Roteiro pronto em [REGISTRO_DE_TESTES.md](REGISTRO_DE_TESTES.md); falta registrar a execução |
 
 **O projeto está completo para o escopo proposto**: ele faz o fluxo inteiro (ouvir a pergunta,
@@ -190,3 +190,5 @@ Combinados:
 | PR #13 | Página Ajustes (salva no `.env` e aplica sem reiniciar) |
 | PR #14 e #15 | Captura de tela atualizada e README da interface |
 | PR #16 | Revisão completa da documentação |
+| PR #17 | Modelos Gemini mais rápidos por padrão (base para a conversa em tempo real) |
+| PR #18 | Botão para desligar a câmera (perguntas sem foto) |

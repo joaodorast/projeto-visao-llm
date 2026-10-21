@@ -36,6 +36,13 @@ PADROES_PROVEDOR = {
 
 CHAVE_POR_PROVEDOR = {"openai": "OPENAI_API_KEY", "gemini": "GEMINI_API_KEY"}
 
+#: Grafia dos nomes dos provedores para exibição.
+NOME_PROVEDOR = {"openai": "OpenAI", "gemini": "Gemini"}
+
+
+def nome_provedor(provider: str) -> str:
+    return NOME_PROVEDOR.get(provider, provider.capitalize())
+
 
 def _bool(valor: str | None, padrao: bool) -> bool:
     if valor is None or valor.strip() == "":
@@ -109,7 +116,7 @@ class Config:
 
     def require_api_key(self) -> str:
         if not self.api_key or not self.api_key.strip():
-            nome = self.provider.capitalize() if self.provider != "openai" else "OpenAI"
+            nome = nome_provedor(self.provider)
             raise ConfigError(
                 f"Chave da {nome} não configurada. Crie um arquivo .env (copie de "
                 f".env.example) e defina {CHAVE_POR_PROVEDOR.get(self.provider, 'OPENAI_API_KEY')}."

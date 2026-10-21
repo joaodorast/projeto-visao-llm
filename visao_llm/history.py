@@ -132,17 +132,19 @@ class HistoryStore:
         """Salva a interação. Falhas aqui nunca interrompem o app (retorna None)."""
         try:
             ts = resultado.timestamp
-            dia = self.pasta / ts.strftime("%Y-%m-%d")
-            dia.mkdir(parents=True, exist_ok=True)
-            img = dia / f"{ts.strftime('%H%M%S_%f')[:-3]}.jpg"
-            img.write_bytes(resultado.image_jpeg)
+            img = None
+            if resultado.image_jpeg:  # sem foto quando a câmera estava desligada
+                dia = self.pasta / ts.strftime("%Y-%m-%d")
+                dia.mkdir(parents=True, exist_ok=True)
+                img = dia / f"{ts.strftime('%H%M%S_%f')[:-3]}.jpg"
+                img.write_bytes(resultado.image_jpeg)
             registro = {
                 "sessao": resultado.sessao,
                 "data_hora": ts.isoformat(timespec="seconds"),
                 "origem": resultado.origem,
                 "pergunta": resultado.pergunta,
                 "resposta": resultado.resposta,
-                "imagem": str(img.relative_to(self.pasta)),
+                "imagem": str(img.relative_to(self.pasta)) if img else None,
                 "tempos_s": {k: round(v, 2) for k, v in resultado.tempos.items()},
                 "aviso_voz": resultado.aviso_voz,
             }

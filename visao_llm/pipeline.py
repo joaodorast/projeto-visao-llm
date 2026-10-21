@@ -48,7 +48,8 @@ class Store(Protocol):
     def save(self, resultado: InteractionResult): ...
 
 
-FrameProvider = Callable[[], np.ndarray]
+#: Devolve o frame atual; None significa "câmera desligada pelo usuário" (pergunta sem foto).
+FrameProvider = Callable[[], "np.ndarray | None"]
 
 
 @dataclass
@@ -149,7 +150,10 @@ class Assistant:
             raise
         except Exception as exc:
             raise CameraError("Falha ao capturar a imagem da câmera.", detalhe=str(exc)) from exc
-        if frame is None or getattr(frame, "size", 0) == 0:
+        if frame is None:  # câmera desligada no app: a pergunta segue sem foto
+            tempos["captura"] = time.perf_counter() - t
+            return None, b""
+        if getattr(frame, "size", 0) == 0:
             raise CameraError("A câmera não forneceu imagem. Verifique a conexão da webcam.")
         frame = frame.copy()
         jpeg = encode_jpeg(frame, self.image_max_side)

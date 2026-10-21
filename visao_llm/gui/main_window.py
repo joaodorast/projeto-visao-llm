@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QLineEdit, QList
                              QSizePolicy, QStackedWidget, QVBoxLayout, QWidget)
 
 from ..audio import AudioPlayer
-from ..config import Config
+from ..config import Config, nome_provedor
 from ..errors import AppError
 from ..history import HistoryStore
 from ..models import InteractionResult, State, new_session_id
@@ -55,6 +55,7 @@ class MainWindow(QMainWindow):
         self._resultados: list[InteractionResult] = []
         self._ultima_resposta: str | None = None
         self._conversa_id = new_session_id()
+        self._camera_ligada = True
         self._history_store = HistoryStore(config.history_dir)
 
         self.setWindowTitle("Visão e Interpretação do Ambiente com LLM")
@@ -148,6 +149,12 @@ class MainWindow(QMainWindow):
         self.live_card = Card("Câmera ao vivo", self.live_view)
         self.cam_badge = QLabel("● conectando", objectName="camBadge")
         self.live_card.acoes.addWidget(self.cam_badge)
+        self.camera_button = QPushButton("Desligar câmera", objectName="secondary")
+        self.camera_button.setCursor(Qt.PointingHandCursor)
+        self.camera_button.setToolTip("Liga e desliga a câmera (Ctrl+Shift+C). "
+                                      "Desligada, as perguntas vão sem foto.")
+        self.camera_button.clicked.connect(self._alternar_camera)
+        self.live_card.acoes.addWidget(self.camera_button)
         esquerda.addWidget(self.live_card, 1)
 
         controles = Card("Pergunta")
@@ -226,6 +233,7 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+N"), self, activated=self._on_clear)
         QShortcut(QKeySequence(Qt.Key_Escape), self, activated=self._on_escape)
         QShortcut(QKeySequence(Qt.Key_F11), self, activated=self._alternar_tela_cheia)
+        QShortcut(QKeySequence("Ctrl+Shift+C"), self, activated=self._alternar_camera)
 
         self.diagnostics_page = DiagnosticsPage(self.config, camera_check=self._checar_camera)
         self._adicionar_pagina("diagnostico", "Diagnóstico", pulse_icon, self.diagnostics_page)
@@ -294,9 +302,13 @@ class MainWindow(QMainWindow):
 
     # ============================================================ câmera
     def _on_frame(self, img: QImage) -> None:
+        if not self._camera_ligada:  # quadro atrasado da captura que acabou de ser desligada
+            return
         self.live_view.set_image(img)
 
     def _on_camera_status(self, ok: bool, msg: str) -> None:
+        if not self._camera_ligada:  # sinal atrasado da captura que acabou de ser desligada
+            return
         self.cam_badge.setText("● ao vivo" if ok else "● sem sinal")
         self.cam_badge.setProperty("estado", "ok" if ok else "falha")  # cor definida no style.py
         self.cam_badge.style().unpolish(self.cam_badge)
@@ -309,8 +321,7 @@ class MainWindow(QMainWindow):
     def _get_assistant(self) -> Assistant | None:
         if self._assistant is None:
             try:
-                self._assistant = self.assistant_factory(self.camera_thread.latest_frame,
-                                                          self.player)
+                self._assistant = self.assistant_factory(self._frame_atual, self.player)
             except AppError as exc:
                 self._show_error(exc.titulo, exc.mensagem)
                 self._set_state("ERRO", exc.mensagem)
@@ -353,7 +364,7 @@ class MainWindow(QMainWindow):
     def _atualizar_textos_config(self) -> None:
         c = self.config
         self.subtitle.setText(f"Pergunte por voz — a IA olha pela câmera e responde falando  ·  "
-                              f"{c.provider.capitalize()} · {c.vision_model}")
+                              f"{nome_provedor(c.provider)} · {c.vision_model}")
         self.statusBar().showMessage(
             f"Câmera: {c.camera_source}  ·  STT: {c.stt_model}  ·  "
             f"TTS: {c.tts_model if c.tts_enabled else 'desativado'}")
@@ -374,8 +385,8 @@ class MainWindow(QMainWindow):
             self._reiniciar_camera()
         return True
 
-    def _reiniciar_camera(self) -> None:
-        estava_ligada = self.camera_thread.isRunning()
+    def _reiniciar_camera(self, forcar: bool = False) -> None:
+        estava_ligada = forcar or (self._camera_ligada and self.camera_thread.isRunning())
         self.camera_thread.stop()
         self.camera_thread.wait(3000)
         self.camera_thread = CameraThread(self.config.camera_source, parent=self)
@@ -385,8 +396,40 @@ class MainWindow(QMainWindow):
         if estava_ligada:
             self.camera_thread.start()
 
+    def _frame_atual(self):
+        """Frame para a pergunta: None com a câmera desligada (a pergunta vai sem foto)."""
+        if not self._camera_ligada:
+            return None
+        return self.camera_thread.latest_frame()
+
+    def _alternar_camera(self) -> None:
+        """Liga ou desliga a câmera. Desligada, a captura para e as perguntas vão sem foto."""
+        if self._camera_ligada:
+            self._camera_ligada = False
+            self.camera_thread.stop()
+            self.camera_thread.wait(3000)
+            self.live_view.clear_image("Câmera desligada\n\nAs perguntas vão sem foto.\n"
+                                       "Clique em Ligar câmera para voltar.")
+            self._badge("● desligada", "off")
+            self.camera_button.setText("Ligar câmera")
+            self.statusBar().showMessage("Câmera desligada: as perguntas vão sem foto.", 6000)
+        else:
+            self._camera_ligada = True
+            self._reiniciar_camera(forcar=True)
+            self._badge("● conectando", "")
+            self.camera_button.setText("Desligar câmera")
+        self.diagnostics_page.set_config(self.config)
+
+    def _badge(self, texto: str, estado: str) -> None:
+        self.cam_badge.setText(texto)
+        self.cam_badge.setProperty("estado", estado)
+        self.cam_badge.style().unpolish(self.cam_badge)
+        self.cam_badge.style().polish(self.cam_badge)
+
     def _checar_camera(self) -> str:
         """Diagnóstico da câmera usando a que já está aberta (abrir de novo falharia no Windows)."""
+        if not self._camera_ligada:
+            return "desligada no app (as perguntas vão sem foto; use Ligar câmera)"
         frame = self.camera_thread.latest_frame()
         altura, largura = frame.shape[:2]
         return f"fonte={self.config.camera_source}, resolução={largura}x{altura} (em uso pelo app)"
@@ -430,6 +473,8 @@ class MainWindow(QMainWindow):
         if pergunta_texto is None:
             self._set_text(self.question_label, None, "Ouvindo sua pergunta…")
         self._set_text(self.answer_label, None, "Aguardando…")
+        if not self._camera_ligada:
+            self.captured_view.clear_image("Sem foto: a câmera está desligada")
         w.start()
 
     def _on_answer(self, resultado: InteractionResult) -> None:
@@ -491,7 +536,7 @@ class MainWindow(QMainWindow):
             else:
                 self.captured_view.clear_image("Imagem ilegível")
         else:
-            self.captured_view.clear_image("Imagem não encontrada no disco")
+            self.captured_view.clear_image("Sem foto nesta pergunta")
         self._set_text(self.question_label, r.pergunta, "")
         self._set_text(self.answer_label, r.resposta, "")
         self._ultima_resposta = r.resposta

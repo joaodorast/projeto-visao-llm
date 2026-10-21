@@ -59,6 +59,9 @@ Webcam + Microfone → Captura e STT → API (modelo multimodal) → Resposta te
 - **Erros como parte do domínio:** toda falha conhecida vira uma subclasse de `AppError` com
   mensagem em português pronta para exibição. Exceções do SDK (OpenAI/Gemini) são traduzidas em um
   único ponto (`api_errors`).
+- **Câmera opcional:** o `FrameProvider` devolve `None` quando a câmera foi desligada no app; o
+  `Assistant` segue sem foto, o `VisionAssistant` envia só o texto (com o aviso de que não há
+  imagem) e o registro é salvo sem arquivo de foto.
 - **Imagem no momento da pergunta:** a foto é tirada logo após o fim da fala e antes da
   transcrição — reflete a cena no instante da pergunta e evita gastar chamadas pagas se a câmera
   estiver indisponível.

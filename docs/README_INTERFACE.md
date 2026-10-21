@@ -48,6 +48,7 @@ Outros atalhos:
 | `Ctrl+N` | Nova conversa |
 | `F11` | Entra e sai da tela cheia |
 | `Esc` | Interrompe a gravação ou a fala; se não houver nenhuma, sai da tela cheia |
+| `Ctrl+Shift+C` | Liga e desliga a câmera |
 
 ## 3. Tela cheia
 
@@ -66,7 +67,12 @@ conversa atual. O funcionamento das conversas está em [README_CONVERSAS.md](REA
 - **Tamanho da janela:** ao abrir, a janela respeita a área útil da tela, sem ficar atrás da barra
   de tarefas.
 - **Indicador da câmera:** "● ao vivo" em laranja quando há imagem; "● sem sinal" em vermelho
-  quando a câmera cai. O app tenta reconectar sozinho.
+  quando a câmera cai (o app tenta reconectar sozinho); "● desligada" em cinza quando foi desligada.
+- **Desligar câmera:** o botão no cartão da câmera (ou `Ctrl+Shift+C`) para a captura e libera a
+  webcam. Com ela desligada, as perguntas vão **sem foto**: o modelo recebe só o texto, responde
+  normalmente e, se a pergunta depender da imagem, avisa que a câmera está desligada. A conversa
+  registra a pergunta sem foto. **Ligar câmera** retoma a captura. No Diagnóstico, a câmera aparece
+  como "desligada no app".
 
 ## 5. Página Diagnóstico
 
